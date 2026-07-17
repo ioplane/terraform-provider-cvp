@@ -1,0 +1,30 @@
+# Go build artifacts
+/terraform-provider-cvp
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/dist/
+/bin/
+
+# Vendor / module cache (kept via go.sum)
+/vendor/
+
+# Terraform state / cache (in examples/)
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/crash.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
