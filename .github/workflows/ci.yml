@@ -171,7 +171,7 @@ jobs:
         run: |
           uv tool run ruff@0.16.0 check .
           uv tool run ruff@0.16.0 format --check .
-          uv run --with ty==0.0.64 ty check .
+          uv run --locked --with ty==0.0.64 ty check .
 
   lint-docs:
     name: Lint (docs · markdown · yaml · spell)

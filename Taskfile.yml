@@ -104,7 +104,7 @@ tasks:
   lint-py:
     desc: Lint + type-check the podman-py automation (ruff + ty).
     cmds:
-      - "{{.EXEC}} sh -c 'cd scripts/automation && uv tool run ruff check . && uv tool run ruff format --check . && uv run --with ty==0.0.64 ty check .'"
+      - "{{.EXEC}} sh -c 'cd scripts/automation && uv tool run ruff check . && uv tool run ruff format --check . && uv run --locked --with ty==0.0.64 ty check .'"
   fmt-py:
     desc: Auto-format + fix the podman-py automation (ruff).
     cmds:

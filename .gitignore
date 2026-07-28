@@ -24,11 +24,10 @@ trivy-results.sarif
 # Node (documentation linters)
 /node_modules/
 
-# Python automation (uv/ruff/ty)
+# Python automation (uv/ruff/ty) — uv.lock IS committed for reproducibility
 **/.venv/
 **/__pycache__/
 *.pyc
-scripts/automation/uv.lock
 
 # Git worktrees / Serena cache
 /.worktrees/

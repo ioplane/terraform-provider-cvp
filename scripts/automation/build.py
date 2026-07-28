@@ -129,7 +129,9 @@ def cmd_up(settings: Settings) -> int:
             mounts=[{"type": "bind", "source": str(REPO_ROOT), "target": "/app", "read_only": False}],
             environment=dict(_DEV_ENVIRONMENT),
             cap_drop=["ALL"],
-            security_opt=["no-new-privileges:true"],
+            # label=disable matches compose.dev.yml so the bind mount is usable
+            # on SELinux-enforcing hosts (Fedora/RHEL family).
+            security_opt=["label=disable", "no-new-privileges:true"],
             restart_policy={"Name": "unless-stopped"},
         )
         container.start()
@@ -215,7 +217,10 @@ def main(argv: list[str]) -> int:
         case "down":
             return cmd_down(settings)
         case "exec":
-            return cmd_exec(settings, [arg for arg in args.command if arg != "--"])
+            # Strip only the leading argparse `--`, preserving any separators the
+            # invoked command itself uses (e.g. `exec -- tool -- positional`).
+            command = args.command[1:] if args.command[:1] == ["--"] else args.command
+            return cmd_exec(settings, command)
         case "lint":
             return cmd_lint(settings)
         case "versions":
