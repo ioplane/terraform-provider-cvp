@@ -26,6 +26,13 @@ updates:
     commit-message:
       prefix: "ci"
       include: scope
+    # One grouped PR per week — avoids splitting multi-path actions like
+    # github/codeql-action (init/autobuild/analyze/upload-sarif) into separate
+    # PRs that break the CodeQL version-consistency check individually.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: "/deployments/containers"
