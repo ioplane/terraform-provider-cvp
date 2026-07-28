@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -14,14 +15,16 @@ import (
 
 	workspaceactions "github.com/ioplane/terraform-provider-cvp/internal/actions/workspace"
 	"github.com/ioplane/terraform-provider-cvp/internal/client/cvp"
+	cvpfunctions "github.com/ioplane/terraform-provider-cvp/internal/functions"
 	changecontrolres "github.com/ioplane/terraform-provider-cvp/internal/resources/change_control"
 	inputsres "github.com/ioplane/terraform-provider-cvp/internal/resources/studio_inputs"
 	workspaceres "github.com/ioplane/terraform-provider-cvp/internal/resources/workspace"
 )
 
 var (
-	_ provider.Provider            = &cvpProvider{}
-	_ provider.ProviderWithActions = &cvpProvider{}
+	_ provider.Provider              = &cvpProvider{}
+	_ provider.ProviderWithActions   = &cvpProvider{}
+	_ provider.ProviderWithFunctions = &cvpProvider{}
 )
 
 type cvpProvider struct {
@@ -185,5 +188,13 @@ func (p *cvpProvider) Actions(ctx context.Context) []func() action.Action {
 		workspaceactions.NewAbandonAction,
 		workspaceactions.NewRollbackAction,
 		workspaceactions.NewRebaseAction,
+	}
+}
+
+// Functions exposes the provider-defined functions (ProviderWithFunctions,
+// Terraform >= 1.8).
+func (p *cvpProvider) Functions(ctx context.Context) []func() function.Function {
+	return []func() function.Function{
+		cvpfunctions.NewStudioPathFunction,
 	}
 }

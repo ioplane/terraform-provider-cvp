@@ -73,6 +73,15 @@ Terraform ≥ 1.14), invoked via `lifecycle.action_trigger` — see
 | `cvp_workspace_rollback` | Roll the workspace back |
 | `cvp_workspace_rebase` | Rebase onto the latest mainline |
 
+## Functions
+
+Provider-defined functions (`ProviderWithFunctions`, Terraform ≥ 1.8):
+
+- `provider::cvp::studio_path(segment...)` — assemble a `cvp_studio_inputs`
+  `path` from ordered segments. A string is a group member/resolver id; a
+  single-key object becomes bracket key-notation (`{ vrfName = "RED-VRF" }` →
+  `"[vrfName=RED-VRF]"`). Generic, pure, offline.
+
 ## Roadmap (abridged)
 
 - **v0.2** — full CRUD + import for the three resources (`cvp_workspace` done,
