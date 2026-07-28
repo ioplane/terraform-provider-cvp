@@ -61,8 +61,8 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   `protobuf` `v1.36.11`; transitive `golang.org/x/{net,text}` bumped to patched
   releases (govulncheck: 0).
 - **Documentation presentation:** every Markdown file's top title is centered,
-  and the README badges are reworked to shields.io flat-style badges centered in
-  the header.
+  and the README badges use [shieldcn](https://shieldcn.dev) shadcn/ui-styled
+  badges (`variant=secondary`) centered in the header.
 
 ### Removed
 

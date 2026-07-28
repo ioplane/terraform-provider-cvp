@@ -48,6 +48,11 @@ trivy-results.sarif
 .env.*
 !.env.example
 
+# Agent tooling (shieldcn skill etc.)
+.agents/
+.claude/
+skills-lock.json
+
 # IDE
 .idea/
 .vscode/
