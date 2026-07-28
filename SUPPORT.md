@@ -1,4 +1,8 @@
+<div align="center">
+
 # Support
+
+</div>
 
 Thanks for using `terraform-provider-cvp`. Here is where to go:
 

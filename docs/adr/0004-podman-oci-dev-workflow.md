@@ -1,4 +1,8 @@
+<div align="center">
+
 # ADR 0004 — Podman/OCI dev, build, and CI workflow
+
+</div>
 
 - **Status:** Accepted
 - **Date:** 2026-07-28

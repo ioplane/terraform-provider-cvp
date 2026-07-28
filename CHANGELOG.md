@@ -1,4 +1,8 @@
+<div align="center">
+
 # Changelog
+
+</div>
 
 All notable changes to `terraform-provider-cvp` are recorded in this file.
 

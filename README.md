@@ -1,22 +1,26 @@
+<div align="center">
+
 # terraform-provider-cvp
 
 <!-- Build & supply chain -->
-[![CI](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/ci.yml/badge.svg)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/ci.yml)
-[![Security](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/security.yml/badge.svg)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/security.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ioplane/terraform-provider-cvp/badge)](https://securityscorecards.dev/viewer/?uri=github.com/ioplane/terraform-provider-cvp)
+[![CI](https://img.shields.io/github/actions/workflow/status/ioplane/terraform-provider-cvp/ci.yml?branch=main&style=flat&logo=githubactions&logoColor=white&label=CI)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/ioplane/terraform-provider-cvp/security.yml?branch=main&style=flat&label=security)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/security.yml)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ioplane/terraform-provider-cvp?style=flat&label=scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/ioplane/terraform-provider-cvp)
 <br>
 <!-- Stack & conventions -->
-[![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev/doc/go1.26)
-[![Terraform Plugin Framework](https://img.shields.io/badge/terraform-plugin--framework%20v1.19-7B42BC?logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform/plugin/framework)
-[![Conventional Commits](https://img.shields.io/badge/commits-conventional%201.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
-[![SemVer](https://img.shields.io/badge/semver-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](CONTRIBUTING.md)
+[![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?style=flat&logo=go&logoColor=white)](https://go.dev/doc/go1.26)
+[![Terraform Plugin Framework](https://img.shields.io/badge/plugin--framework-v1.19-7B42BC?style=flat&logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform/plugin/framework)
+[![Conventional Commits](https://img.shields.io/badge/commits-conventional-FE5196?style=flat&logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
+[![SemVer 2.0.0](https://img.shields.io/badge/semver-2.0.0-blue?style=flat)](https://semver.org/spec/v2.0.0.html)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](CONTRIBUTING.md)
 
-Terraform provider for **Arista CloudVision Portal (CVP)** — manage workspaces,
-Studio inputs, and change control declaratively over gRPC/TLS. Built on the
+**Arista CloudVision Portal (CVP) provider** — manage workspaces, Studio inputs, and
+change control declaratively over gRPC/TLS, built on the
 [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework)
 (protocol 6).
+
+</div>
 
 > [!NOTE]
 > **Status: v0.1 skeleton.** Provider schema is authored; CRUD hooks are stubbed

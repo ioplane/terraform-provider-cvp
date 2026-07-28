@@ -1,4 +1,8 @@
+<div align="center">
+
 # internal/pb — generated CloudVision API stubs
+
+</div>
 
 **Generated code. Do not edit by hand.**
 

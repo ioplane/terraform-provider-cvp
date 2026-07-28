@@ -1,4 +1,8 @@
+<div align="center">
+
 # Governance
+
+</div>
 
 How decisions are made in `terraform-provider-cvp`. This complements the
 delivery method in [`docs/methodology.md`](docs/methodology.md).

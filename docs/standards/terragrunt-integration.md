@@ -1,4 +1,8 @@
+<div align="center">
+
 # Terragrunt integration
+
+</div>
 
 How consumers drive `terraform-provider-cvp` with
 [Terragrunt](https://terragrunt.gruntwork.io/) (pinned **v1.1.1** in the dev

@@ -1,4 +1,8 @@
+<div align="center">
+
 # Terraform provider best practices
+
+</div>
 
 The rules the provider is held to, distilled from HashiCorp's
 [provider design principles](https://developer.hashicorp.com/terraform/plugin/best-practices/hashicorp-provider-design-principles),

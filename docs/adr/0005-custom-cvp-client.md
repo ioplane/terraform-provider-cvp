@@ -1,4 +1,8 @@
+<div align="center">
+
 # ADR 0005 — Custom buf-generated CVP client (drop cloudvision-go)
+
+</div>
 
 - **Status:** Accepted
 - **Date:** 2026-07-28

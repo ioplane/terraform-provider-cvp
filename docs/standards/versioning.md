@@ -1,4 +1,8 @@
+<div align="center">
+
 # Versioning
+
+</div>
 
 The provider follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 The provider binary, its JSON schema, and (when published) its docs share one

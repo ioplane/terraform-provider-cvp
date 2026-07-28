@@ -1,4 +1,8 @@
+<div align="center">
+
 # Commit conventions
+
+</div>
 
 Commits follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/),
 enforced by `commitlint` (config: [`.commitlintrc.yaml`](../../.commitlintrc.yaml))

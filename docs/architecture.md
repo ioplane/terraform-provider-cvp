@@ -1,4 +1,8 @@
+<div align="center">
+
 # Architecture
+
+</div>
 
 This page is the map. The rationale and resource shapes live in the root
 [`design.md`](../design.md); the decisions that shaped them are recorded as
