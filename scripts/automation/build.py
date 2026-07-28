@@ -52,6 +52,14 @@ _DEV_ENVIRONMENT = {
     "TF_IN_AUTOMATION": "1",
 }
 
+# Lab credentials the caller may export at any time; forwarded into every exec
+# so acceptance runs authenticate even against a container started earlier.
+_LAB_ENV_VARS = ("CVP_ENDPOINT", "CVP_AUTH_METHOD", "CVP_TOKEN", "TF_ACC")
+
+
+def _lab_environment() -> dict[str, str]:
+    return {var: value for var in _LAB_ENV_VARS if (value := os.environ.get(var))}
+
 
 @dataclass(frozen=True, slots=True)
 class Settings:
@@ -113,21 +121,13 @@ def cmd_up(settings: Settings) -> int:
             if rc:
                 return rc
 
-        # Forward caller-provided lab credentials so acceptance commands run
-        # through `build.py exec` can authenticate, mirroring compose.dev.yml.
-        environment = dict(_DEV_ENVIRONMENT)
-        for var in ("CVP_ENDPOINT", "CVP_AUTH_METHOD", "CVP_TOKEN", "TF_ACC"):
-            value = os.environ.get(var)
-            if value:
-                environment[var] = value
-
         container = podman.containers.create(
             image=DEV_IMAGE,
             name=DEV_CONTAINER,
             command=["sleep", "infinity"],
             working_dir="/app",
             mounts=[{"type": "bind", "source": str(REPO_ROOT), "target": "/app", "read_only": False}],
-            environment=environment,
+            environment=dict(_DEV_ENVIRONMENT),
             cap_drop=["ALL"],
             security_opt=["no-new-privileges:true"],
             restart_policy={"Name": "unless-stopped"},
@@ -160,7 +160,7 @@ def cmd_exec(settings: Settings, command: list[str]) -> int:
         except NotFound:
             print(f"{DEV_CONTAINER} not running; run `build.py up` first", file=sys.stderr)
             return 1
-        rc, output = container.exec_run(cmd=command, demux=False, tty=True)
+        rc, output = container.exec_run(cmd=command, demux=False, tty=True, environment=_lab_environment())
         if isinstance(output, (bytes, bytearray)):
             sys.stdout.buffer.write(output)
         elif isinstance(output, str):

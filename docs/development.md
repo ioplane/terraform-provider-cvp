@@ -5,12 +5,18 @@ Node toolchain is required.**
 
 ## Prerequisites
 
+Only these host tools are needed — everything else lives in the dev container.
+
 | Tool | Min version | Present here |
 |---|---|---|
+| [`task`](https://taskfile.dev) (build runner) | 3.40 | 3.49.1 |
 | `podman` | 5.0 | 5.8.2 |
 | `podman-compose` | 1.5 | 1.5.0 |
 | `podman-py` (automation) | 5.5 | 5.7.0 |
 | `gopass` (secrets) | any | ✓ |
+
+Install `task` per <https://taskfile.dev/installation/> (single Go binary), then
+run everything with `task <name>`.
 
 The container (`golang:1.26-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))
