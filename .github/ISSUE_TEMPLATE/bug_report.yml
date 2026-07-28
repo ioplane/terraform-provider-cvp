@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a defect in terraform-provider-cvp
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Do **not** include secrets, tokens, certificates,
+        Terraform state, or CVP support bundles. Redact endpoints and identifiers.
+  - type: input
+    id: provider-version
+    attributes:
+      label: Provider version
+      placeholder: "e.g. v0.2.0 (from `terraform version` / lockfile)"
+    validations:
+      required: true
+  - type: input
+    id: terraform-version
+    attributes:
+      label: Terraform / OpenTofu version
+      placeholder: "e.g. Terraform 1.15.8"
+    validations:
+      required: true
+  - type: input
+    id: cvp-version
+    attributes:
+      label: CloudVision Portal version
+      placeholder: "e.g. CVP 2026.2.0"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Minimal reproducing configuration
+      description: A minimal HCL snippet. Redact credentials and identifiers.
+      render: hcl
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output / logs
+      description: Run with `TF_LOG=DEBUG` and paste the relevant portion. Redact secrets.
+      render: shell
+    validations:
+      required: false

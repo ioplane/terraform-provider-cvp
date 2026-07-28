@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a new resource, data source, attribute, or behaviour
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to do that the provider doesn't support today?
+    validations:
+      required: true
+  - type: input
+    id: cvp-service
+    attributes:
+      label: CVP service / RPC
+      description: Which CloudVision service or API backs this, if known?
+      placeholder: "e.g. arista.tag.v2.TagAssignmentConfigService"
+    validations:
+      required: false
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed HCL surface
+      description: Sketch the resource/attribute shape you'd expect.
+      render: hcl
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: This fits the provider's scope (on-prem CVP; see design.md non-goals).
+          required: true

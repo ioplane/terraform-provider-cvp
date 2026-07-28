@@ -1,0 +1,20 @@
+# CODEOWNERS — every PR requires review from a code owner (enforced by branch
+# protection; see CONTRIBUTING.md). https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything.
+*                       @ioplane/maintainers
+
+# Provider surface (public contract) — review by the architect group.
+/internal/provider/     @ioplane/maintainers
+/internal/resources/    @ioplane/maintainers
+/api/proto/             @ioplane/maintainers
+/internal/pb/           @ioplane/maintainers
+
+# Release, security, and CI plumbing.
+/.github/               @ioplane/maintainers
+/.goreleaser.yml        @ioplane/maintainers
+/deployments/           @ioplane/maintainers
+
+# Standards & governance.
+/docs/standards/        @ioplane/maintainers
+/AGENTS.md              @ioplane/maintainers

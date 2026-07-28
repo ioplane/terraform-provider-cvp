@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "build"
+      include: scope
+    groups:
+      terraform-plugin:
+        patterns:
+          - "github.com/hashicorp/terraform-plugin-*"
+      grpc-proto:
+        patterns:
+          - "google.golang.org/grpc"
+          - "google.golang.org/protobuf"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+      include: scope
+
+  - package-ecosystem: docker
+    directory: "/deployments/containers"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "build"
+      include: scope
