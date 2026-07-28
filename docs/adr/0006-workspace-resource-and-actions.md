@@ -34,7 +34,7 @@ Terraform **Actions** (`provider.ProviderWithActions`, Terraform ≥ 1.14,
 side effects invoked from configuration. They are the honest model for the CVP
 verbs.
 
-### Evidence (live netlab2 CVP — `um-cvp.infra4.dev`)
+### Evidence (live netlab2 CVP lab)
 
 The design is grounded in a live round-trip against the lab, not the proto
 shapes alone (methodology "evidence discipline"):

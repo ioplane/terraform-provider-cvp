@@ -167,7 +167,8 @@ This repo follows the house standard (see the sibling `pulumi-eos`):
 | Contributing & quality gates | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | Governance & branch protection | [`GOVERNANCE.md`](GOVERNANCE.md) |
 | Security policy | [`SECURITY.md`](SECURITY.md) |
-| Design & decisions (D1–D8) | [`design.md`](design.md) |
+| Design & decisions (D1–D9) | [`design.md`](design.md) |
+| Compatibility (TF/OpenTofu versions) | [`docs/compatibility.md`](docs/compatibility.md) |
 | Standards | [`docs/standards/`](docs/standards/) |
 | Methodology | [`docs/methodology.md`](docs/methodology.md) |
 | Architecture · development · testing · release | [`docs/`](docs/) |

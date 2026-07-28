@@ -45,7 +45,7 @@ variable "cvp_token" {
 ### Required
 
 - `auth_method` (String) One of `session`, `cert`, `bearer`.
-- `endpoint` (String) CVP gRPC endpoint (e.g. `um-cvp01.infra4.dev:443`).
+- `endpoint` (String) CVP gRPC endpoint (e.g. `cvp.example.com:443`).
 
 ### Optional
 

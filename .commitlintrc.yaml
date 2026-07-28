@@ -30,6 +30,8 @@ rules:
       - aaa           # service accounts, tokens, identity providers
       - client        # internal/client/cvp gRPC wrapper
       - auth          # authentication methods (cert / session / bearer)
+      - functions     # provider-defined functions (internal/functions)
+      - actions       # provider actions (internal/actions)
       - docs          # documentation
       - examples      # examples/ HCL + Terragrunt
       - ci            # GitHub Actions / workflows
