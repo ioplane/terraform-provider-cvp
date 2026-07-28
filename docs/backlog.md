@@ -17,7 +17,7 @@ Priority: **P0** (fold into current v0.2/v0.3 design) · **P1** (v0.x, high valu
 
 | Capability | TF min | CVP fit | Prio |
 |---|---|---|---|
-| **Actions** (`ProviderWithActions`) | 1.14 | The CVP workflow verbs — workspace **build / submit / approve / start / abandon**, change-control **start / rollback** — are imperative operations, not desired-state. Modeling them as **actions** is more honest than the current boolean attributes (`auto_build`, `auto_submit`, `auto_approve`) that overload a resource with side effects. See §6. | **P0** |
+| **Actions** (`ProviderWithActions`) | 1.14 | ✅ **Done for workspace** (ADR 0006): `cvp_workspace_build / _cancel_build / _submit / _abandon / _rollback / _rebase` replace the `auto_*` booleans. Change-control `start / approve / rollback` actions remain to do. See §6. | **P0** |
 | **Managed resource identity** (`ResourceWithIdentity`) | 1.12 | Every CVP object has a stable server-minted id (`workspace_id`, studio id, cc id). Expose it as the resource **identity** → import-by-identity, cross-run stable identification, cleaner drift. | **P1** |
 | **Write-only attributes** (`WriteOnly: true`) | 1.11 | Studio `is_secret` inputs and any password/token argument (`design.md` D6). Never persisted to plan/state. Pair with a `*_wo_version` rotation trigger (the `aws_db_instance` pattern; also `terraform-provider-pgsteward`). | **P0** |
 | **Ephemeral resources** (`EphemeralResource`, Open/Renew/Close) | 1.10 | `cvp_service_account_token` / `cvp_api_token` — mint a short-lived CVP token (via `serviceaccount.v1.TokenConfigService`) for other providers/tools **without** writing it to state; `RenewAt` for TTL tokens. Mirrors `pgsteward_cloud_token`, `hashicorp/vault`, `Azure/azapi`. | **P1** |
@@ -62,21 +62,19 @@ Priority: **P0** (fold into current v0.2/v0.3 design) · **P1** (v0.x, high valu
 | Arista `terraform-provider-cloudeos` / CVaaS provider | **Reference:** closest domain analog for resource shapes; CVaaS-first is a documented non-goal (`design.md`), but a useful cross-check for surface parity. |
 | `hashicorp/vault`, `Azure/azapi` | **Reference:** canonical ephemeral-resource + write-only implementations. |
 
-## 6. Design spotlight: workflow verbs as Actions (P0 to decide)
+## 6. Design spotlight: workflow verbs as Actions — ✅ RESOLVED (ADR 0006)
 
-The v0.1 skeleton models workspace lifecycle with boolean attributes
-(`auto_build`, `auto_submit`, `auto_approve`) and a separate `cvp_change_control`
-resource with `wait_for_execution`. Terraform **Actions** (1.14) offer a cleaner
-model: `build`, `submit`, `approve`, `start`, `abandon` are imperative verbs, not
-desired state.
+**Decision: B — resources + actions.** `cvp_workspace` holds declarative fields;
+the workflow transitions are Terraform **Actions** (`ProviderWithActions`, 1.14)
+the practitioner invokes via `lifecycle.action_trigger`. The v0.1
+`auto_build` / `auto_submit` / `auto_approve` booleans are removed. This matches
+CVP's actual imperative workflow and upholds the non-goal "do not automate
+approval" (`design.md`).
 
-Two candidate designs to weigh before v0.2 freezes the schema:
+The verb set is the `arista.workspace.v1` `Request` enum — build, cancel_build,
+submit (+force), abandon, rollback, rebase. `approve` / `start` are **change
+control** verbs, not workspace ones, and are tracked as a follow-up (§1).
 
-- **A — resources only (current):** simplest; but a resource whose `apply`
-  triggers a build+submit+approve chain hides side effects in state transitions.
-- **B — resources + actions:** `cvp_workspace` holds declarative fields; the
-  transitions are `action` blocks the practitioner invokes. Matches CVP's actual
-  imperative workflow and the non-goal "do not automate approval" (`design.md`).
-
-This is a **contract-affecting** decision → resolve at the design gate and record
-as an ADR before implementing v0.2 CRUD.
+Full rationale, live-lab evidence, and rejected alternatives:
+[ADR 0006](adr/0006-workspace-resource-and-actions.md); design record
+`design.md` D9.

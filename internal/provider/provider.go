@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -11,10 +12,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	workspaceactions "github.com/ioplane/terraform-provider-cvp/internal/actions/workspace"
 	"github.com/ioplane/terraform-provider-cvp/internal/client/cvp"
 	changecontrolres "github.com/ioplane/terraform-provider-cvp/internal/resources/change_control"
 	inputsres "github.com/ioplane/terraform-provider-cvp/internal/resources/studio_inputs"
 	workspaceres "github.com/ioplane/terraform-provider-cvp/internal/resources/workspace"
+)
+
+var (
+	_ provider.Provider            = &cvpProvider{}
+	_ provider.ProviderWithActions = &cvpProvider{}
 )
 
 type cvpProvider struct {
@@ -129,10 +136,11 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		return
 	}
 
-	// The lazy gRPC client is shared with every resource/data source via
-	// ProviderData; resources type-assert it to *cvp.Client in Configure.
+	// The lazy gRPC client is shared with every resource, data source and
+	// action via ProviderData; each type-asserts it to *cvp.Client in Configure.
 	resp.DataSourceData = client
 	resp.ResourceData = client
+	resp.ActionData = client
 }
 
 // mapClientError turns cvp client-construction errors into actionable,
@@ -165,4 +173,17 @@ func (p *cvpProvider) Resources(ctx context.Context) []func() resource.Resource 
 
 func (p *cvpProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return nil
+}
+
+// Actions exposes the CVP workspace workflow verbs as Terraform actions
+// (ProviderWithActions, Terraform >= 1.14). See ADR 0006.
+func (p *cvpProvider) Actions(ctx context.Context) []func() action.Action {
+	return []func() action.Action{
+		workspaceactions.NewBuildAction,
+		workspaceactions.NewCancelBuildAction,
+		workspaceactions.NewSubmitAction,
+		workspaceactions.NewAbandonAction,
+		workspaceactions.NewRollbackAction,
+		workspaceactions.NewRebaseAction,
+	}
 }

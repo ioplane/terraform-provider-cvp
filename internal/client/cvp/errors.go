@@ -31,4 +31,7 @@ var (
 	ErrClientCertRequired = errors.New("cvp: cert_pem and key_pem are required for cert auth")
 	// ErrInvalidCACert is returned when the provided CA PEM cannot be parsed.
 	ErrInvalidCACert = errors.New("cvp: ca_pem is not a valid PEM certificate bundle")
+	// ErrUnknownWorkspaceVerb is returned by SubmitWorkspaceVerb for a verb
+	// outside the known WorkspaceVerb set.
+	ErrUnknownWorkspaceVerb = errors.New("cvp: unknown workspace verb")
 )

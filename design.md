@@ -129,7 +129,8 @@ Implementation: `google.golang.org/grpc` retry middleware.
 
 **v0.2 (usable prototype)**:
 
-- Full CRUD wired.
+- Full CRUD wired. `cvp_workspace` is **done** — CRUD + import + workflow
+  Actions, live acceptance green against the um-cvp lab (D9, ADR 0006).
 - One acceptance test per resource (against the um-cvp lab).
 - Documented breaking-change probability.
 
@@ -145,6 +146,30 @@ Implementation: `google.golang.org/grpc` retry middleware.
 - 3-tier resources.
 - Multi-cluster support (parametrize the provider by cluster).
 - SBOM + signed releases.
+
+### D9 — Workspace as a declarative resource + workflow Actions
+
+`cvp_workspace` manages **declarative state** (`display_name`, `description`,
+`exclude_network_provisioning`, plus the computed `workspace_id`, `state`,
+`needs_build`, `last_build_id`, audit fields, `cc_ids`). The imperative workflow
+verbs are **Terraform Actions** (`ProviderWithActions`, Terraform ≥ 1.14), not
+resource attributes:
+
+| Action | Wire request |
+|---|---|
+| `cvp_workspace_build` | `REQUEST_START_BUILD` |
+| `cvp_workspace_cancel_build` | `REQUEST_CANCEL_BUILD` |
+| `cvp_workspace_submit` (`force`) | `REQUEST_SUBMIT` / `REQUEST_SUBMIT_FORCE` |
+| `cvp_workspace_abandon` | `REQUEST_ABANDON` |
+| `cvp_workspace_rollback` | `REQUEST_ROLLBACK` |
+| `cvp_workspace_rebase` | `REQUEST_REBASE` |
+
+CRUD maps to `WorkspaceConfigService.Set` (create/update),
+`WorkspaceService.GetOne` (read), and **abandon-then-`Delete`** (destroy). Every
+verb mints a `request_id` (CVP rejects a verb without one). There is **no
+`approve`/`start` verb** on a workspace — those belong to change control. This
+removes the v0.1 `auto_build` / `auto_submit` / `auto_approve` booleans and keeps
+approval a deliberate step (non-goals). Rationale and evidence: **ADR 0006**.
 
 ## Acceptance test topology
 
@@ -166,9 +191,11 @@ Test lifecycle per resource:
 
 ## Open design questions (backlog)
 
-Capabilities and unresolved contract choices to weigh before the v0.2 schema
-freezes are tracked in [`docs/backlog.md`](docs/backlog.md). The highest-leverage
-one is **modeling the workspace workflow verbs (build / submit / approve / start
-/ abandon) as Terraform Actions (1.14)** rather than boolean resource attributes
-— a contract-affecting decision to resolve at the design gate and record as an
-ADR (backlog §6).
+Capabilities and unresolved contract choices are tracked in
+[`docs/backlog.md`](docs/backlog.md).
+
+The highest-leverage one — **modeling the workspace workflow verbs as Terraform
+Actions (1.14)** rather than boolean resource attributes — is now **resolved**:
+see [D9](#d9--workspace-as-a-declarative-resource--workflow-actions) and
+[ADR 0006](docs/adr/0006-workspace-resource-and-actions.md). The `auto_build` /
+`auto_submit` / `auto_approve` booleans are removed.

@@ -57,6 +57,21 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   failures (`UNAVAILABLE`) retry with exponential backoff (D7). The provider
   `Configure` now builds the client and surfaces config errors as attribute
   diagnostics. Unit-tested (config validation, bearer metadata, TLS creds).
+- **`cvp_workspace` — full CRUD, import, and workflow Actions (ADR 0006).** The
+  workspace is now a real, usable resource: Create/Update via
+  `WorkspaceConfigService.Set`, Read via `WorkspaceService.GetOne` (with drift
+  and `NotFound` handling), Delete via evidence-backed **abandon-then-config-delete**,
+  and `ImportState` by `workspace_id`. New computed attributes surface server
+  state (`state`, `needs_build`, `last_build_id`, `created_at`/`created_by`,
+  `last_modified_*`, `cc_ids`). The imperative workflow verbs are **Terraform
+  Actions** (`ProviderWithActions`, Terraform ≥ 1.14): `cvp_workspace_build`,
+  `cvp_workspace_cancel_build`, `cvp_workspace_submit` (with `force`),
+  `cvp_workspace_abandon`, `cvp_workspace_rollback`, `cvp_workspace_rebase` —
+  each one `Set` with a `Request` enum plus a minted `request_id`. Unit-tested
+  (state mapping, verb→request table, request-id format) and covered by **live
+  acceptance** against the netlab2 CVP lab (create/read/update/import/destroy +
+  build/abandon verb lifecycle). Recorded in [ADR 0006](docs/adr/0006-workspace-resource-and-actions.md)
+  and `design.md` D9.
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC
@@ -65,6 +80,12 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 
 ### Changed
 
+- **BREAKING: `cvp_workspace` schema reworked (ADR 0006).** The `auto_build`,
+  `auto_submit` and `auto_approve` booleans are **removed** — the workflow verbs
+  are Terraform Actions now (see Added). The stable key attribute is renamed from
+  `id` to **`workspace_id`** (optional; provider-minted when omitted). Import is
+  by `workspace_id`. Pre-1.0, shipped as a MINOR bump per the versioning
+  standard.
 - **Build runner migrated from `make` to [Task](https://taskfile.dev)**
   (`Taskfile.yml` replaces the `Makefile`); all docs and hooks updated.
 - **`scripts/automation/build.py` now uses the `podman-py` library** (Podman
