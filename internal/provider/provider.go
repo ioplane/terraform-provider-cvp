@@ -131,7 +131,7 @@ func buildTLSCreds(cfg *providerModel) (credentials.TransportCredentials, diag.D
 		// Guarded by the documented, opt-in `insecure_tls` provider flag; never
 		// a default. See SECURITY.md.
 		//nolint:gosec // G402: opt-in lab-only flag, not the default path.
-		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}), nil
+		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS13}), nil
 	}
 	return credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13}), nil
 }
