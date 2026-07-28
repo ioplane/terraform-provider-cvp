@@ -55,7 +55,7 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   stubs. The upcoming `cvp_studio_inputs` resource is backed by
   **`InputsConfigService`** (GetOne/GetAll/Set/Delete); secret inputs are written
   through it as **write-only** attributes (design.md D1/D5/D6). The generated
-  read-only `SecretInputService` (Get/Subscribe only, returns the *unmasked*
+  read-only `SecretInputService` (Get/Subscribe only, returns the _unmasked_
   value) is **deliberately not consumed** by the provider — reading it would pull
   plaintext secrets into provider memory and violate D6; it is reserved for UI /
   ops tooling.
