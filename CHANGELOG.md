@@ -110,6 +110,14 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   protocol (6.0), framework and Go versions. Linked from the README and docs
   index; `commitlint` now also allows the `functions` and `actions` commit
   scopes.
+- **`arista.changecontrol.v1` gRPC stubs.** Vendored
+  `arista/changecontrol.v1/{changecontrol,services.gen}.proto` at the pinned
+  revision (no new transitive imports) and generated the Go stubs. The writable
+  config services `ChangeControlConfigService` and `ApproveConfigService`
+  (GetOne/Set/Delete) back the upcoming `cvp_change_control` resource and its
+  approve/start/rollback actions; the read-only `ChangeControlService`
+  (GetOne/GetAll/Subscribe) is the state view for computed status (design.md D3,
+  ADR 0006).
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC

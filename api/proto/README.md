@@ -40,20 +40,21 @@ other dependency bump (`build(deps)` commit, CHANGELOG entry).
 
 ## Current vendored closure
 
-Vendored from `cloudvision-apis` — the `arista/workspace.v1` and
-`arista/studio.v1` import closures (computed with
+Vendored from `cloudvision-apis` — the `arista/workspace.v1`, `arista/studio.v1`
+and `arista/changecontrol.v1` import closures (computed with
 `buf build … | buf ls-files --include-imports`); Google well-known types are
 provided by buf and not vendored:
 
 ```text
 arista/workspace.v1/{workspace,services.gen}.proto
 arista/studio.v1/{studio,services.gen}.proto
+arista/changecontrol.v1/{changecontrol,services.gen}.proto
 arista/{configstatus.v1,imagestatus.v1,subscriptions,time}/*.proto
 fmp/{deletes,extensions,wrappers}.proto
 ```
 
-`studio.v1` adds no new transitive imports beyond the workspace closure
-(`fmp/*`, `subscriptions`, `time`, Google well-known types).
+`studio.v1` and `changecontrol.v1` add no new transitive imports beyond the
+workspace closure (`fmp/*`, `subscriptions`, `time`, Google well-known types).
 
 The pinned upstream revision is recorded in `.upstream-revision`. `buf lint`
 skips these vendored trees (see `buf.yaml`); `task proto` regenerates

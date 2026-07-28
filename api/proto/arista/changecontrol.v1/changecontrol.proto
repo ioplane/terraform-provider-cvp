@@ -1,0 +1,584 @@
+// Copyright (c) 2020 Arista Networks, Inc.  All rights reserved.
+// Use of this source code is governed by the Apache License 2.0
+// that can be found in the COPYING file.
+
+syntax = "proto3";
+
+package arista.changecontrol.v1;
+
+option go_package = "github.com/aristanetworks/cloudvision-go/api/arista/changecontrol.v1;changecontrol";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+import "fmp/extensions.proto";
+import "fmp/wrappers.proto";
+
+// RepeatedRepeatedString wraps a repeated `fmp.RepeatedString`
+// to define a string matrix which is used to represent stage
+// rows (see `StageConfig`).
+message RepeatedRepeatedString {
+	// values is a list of `fmp.RepeatedString`.
+	repeated fmp.RepeatedString values = 1;
+}
+
+// ChangeControlKey uniquely identifies a Change Control.
+message ChangeControlKey {
+	option (fmp.model_key) = true;
+
+	// id is the ID of the Change Control.
+	google.protobuf.StringValue id = 1;
+}
+
+// Action is an action to perform during the execution of
+// a stage of a Change Control. Available actions can be
+// fetched using the "action" services.
+message Action {
+	// name is the name of the action.
+	google.protobuf.StringValue name = 1;
+	// timeout is the maximum duration in seconds that
+	// the action can execute before timing out. If this
+	// is not set, then this is interpreted to mean there
+	// is no timeout.
+	google.protobuf.UInt32Value timeout = 2;
+	// args are the arguments of the action.
+	fmp.MapStringString args = 3;
+}
+
+// StageConfig holds a configuration for a stage in a change
+// control. Each stage generally defines either an action
+// or a series of sub-stages.
+message StageConfig {
+	// name is the name of the stage.
+	google.protobuf.StringValue name = 1;
+	// action is the action to perform on stage execution.
+	Action action = 2;
+        // rows is a series of rows of parallel stages referenced
+	// by ID. Each row is run one after the other and the
+	// stages within each row are run in parallel.
+	//
+	// For example:
+	//
+	// ```
+	// [["1a", "1b"], ["2"]]
+	// ```
+	//
+	// This configures stage 1a and stage 1b to run at the
+	// same time, and then stage 2 once both of them have
+	// completed.
+        RepeatedRepeatedString rows = 3;
+}
+
+// StageConfigMap wraps a map from stage ID to `StageConfig`.
+// This defines the configuration and order of execution
+// for the stages in a Change Control.
+//
+// For example:
+//
+// ```
+// {
+//     "root": { name: "root", rows: [["1-2"], ["3"]] },
+//     "1-2":  { name: "stages 1-2", rows: [["1"], ["2"]] },
+//     "1":    { name: "stage 1", rows: [["1a", "1b"]] },
+//     "1a":   { name: "stage 1a", action: { name: "task", args: { "TaskID": "101" } },
+//     "1b":   { name: "stage 1b", action: { name: "task", args: { "TaskID": "102" } },
+//     "2":    { name: "stage 2", action: { name: "task", args: { "TaskID": "103" } },
+//     "3":    { name: "stage 3", action: { name: "task", args: { "TaskID": "104" } }
+// }
+// ```
+//
+// Assuming the root stage ID of the enclosing Change Control
+// is "root", this would mean to do the following in sequence:
+//
+// ```
+// root
+// |- stages 1-2
+// |  |- stage 1
+// |  |  |- stage 1a, stage 1b (parallel)
+// |  |- stage 2
+// |- stage 3
+// ```
+//
+// That is, execute tasks `101` and `102` in parallel, then task `103`, then task `104`.
+message StageConfigMap {
+	// values is a map from stage ID to `StageConfig`.
+	map<string, StageConfig> values = 1;
+}
+
+// ChangeConfig holds a configuration for the change of a change
+// control which is essentially a named configuration of stages.
+message ChangeConfig {
+	// name is the name of the change.
+	google.protobuf.StringValue name = 1;
+	// root_stage_id is the ID of the root stage or the stage that
+	// should execute first.
+	google.protobuf.StringValue root_stage_id = 2;
+	// stages holds a configuration of stages. See `StageConfigMap`
+	// description for more information.
+	StageConfigMap stages = 3;
+	// notes are any notes associated with the change.
+	google.protobuf.StringValue notes = 4;
+}
+
+// FlagConfig is used to set a flag on a Change Control that takes
+// a boolean value (e.g. start/stop, approve/unapprove).
+message FlagConfig {
+	// value is the value of the flag (`true` or `false`).
+	google.protobuf.BoolValue value = 1;
+	// notes are any notes associated with the flag value.
+	google.protobuf.StringValue notes = 2;
+}
+
+// TimestampFlagConfig is used to set a flag on a Change Control
+// that takes a timestamp value (e.g. schedule/unschedule).
+message TimestampFlagConfig {
+	// value is the value of the flag (some timestamp).
+	google.protobuf.Timestamp value = 1;
+	// notes are the notes associated with the flag value.
+	google.protobuf.StringValue notes = 2;
+}
+
+// ChangeControlConfig holds the configuration of a Change Control.
+message ChangeControlConfig {
+	option (fmp.model) = "rw";
+
+	// key uniquely identifies the Change Control.
+	ChangeControlKey key = 1;
+	// change is the change subject to execution.
+	ChangeConfig change = 2;
+	// start is the flag to start (`start.value` set to `true`)
+	// or stop (`start.value` set to `false`) execution of the
+	// Change Control.
+	FlagConfig start = 3;
+	// schedule is the flag to schedule (`schedule.value` set to
+	// some timestamp) or unschedule (`schedule.value` set to
+	// `nil`) the Change Control for execution.
+	TimestampFlagConfig schedule = 4;
+}
+
+// StageStatus defines the possible execution statuses of a stage.
+enum StageStatus {
+    // STAGE_STATUS_UNSPECIFIED means unknown stage status.
+    STAGE_STATUS_UNSPECIFIED = 0;
+    // STAGE_STATUS_RUNNING means the stage has begun execution.
+    STAGE_STATUS_RUNNING = 1;
+    // STAGE_STATUS_COMPLETED means the stage has ceased execution.
+    // Success/failure of a stage cannot be inferred from this status
+    // alone but rather this status plus the stage error. That is, no
+    // error implies success and some error implies failure.
+    STAGE_STATUS_COMPLETED = 2;
+    // STAGE_STATUS_NOT_STARTED means the stage has not been started.
+    STAGE_STATUS_NOT_STARTED = 3;
+}
+
+// StepStatus defines the possible execution statuses of a step within an action.
+enum StepStatus {
+    // STEP_STATUS_UNSPECIFIED represents an unspecified state for a step within
+    // an action.
+    STEP_STATUS_UNSPECIFIED = 0;
+    // STEP_STATUS_NOT_STARTED represents that the step has not started execution.
+    STEP_STATUS_NOT_STARTED = 1;
+    // STEP_STATUS_RUNNING represents that the step is under execution.
+    STEP_STATUS_RUNNING = 2;
+    // STEP_STATUS_FINISHED represents that the step has finished execution.
+    STEP_STATUS_FINISHED = 3;
+    // STEP_STATUS_SKIPPED represents that the step has been skipped from execution.
+    STEP_STATUS_SKIPPED = 4;
+    // STEP_STATUS_FAILED represents that the step has failed its execution.
+    STEP_STATUS_FAILED = 5;
+}
+
+// StepInfo contains the status details of an action step.
+message StepInfo {
+	// name represents the name of the step.
+	google.protobuf.StringValue name = 1;
+	// status represents the present execution status of the step.
+	StepStatus status = 2;
+	// error captures any error that occurred.
+	google.protobuf.StringValue error = 3;
+	// message represents any relevant information associated with the step.
+	google.protobuf.StringValue message = 4;
+}
+
+// ActionSteps tracks the status of each step within an action.
+message ActionSteps {
+	// values maps each action step's execution sequence to its status information,
+	// represented by StepInfo.
+	map<string, StepInfo> values = 1;
+}
+
+// Stage holds the configuration and status of a stage.
+message Stage {
+	// name is the name of the stage.
+	google.protobuf.StringValue name = 1;
+	// action is the action to perform during the stage.
+	Action action = 2;
+	// rows is a series of rows of parallel stages referenced
+	// by ID. See `StageConfig.rows` for more details.
+	RepeatedRepeatedString rows = 3;
+	// status is the execution status of the stage.
+	StageStatus status = 4;
+	// error is any error that occured during the execution
+	// of the stage.
+	google.protobuf.StringValue error = 5;
+	// start_time is the time when status change to Running.
+	google.protobuf.Timestamp start_time = 6;
+	// end_time is the time when status change to Completed.
+	google.protobuf.Timestamp end_time = 7;
+	// steps represent the granular steps and their statuses
+	// associated with the action performed in the Change Control stage.
+	// Each stage generally defines either an action
+	// or a series of sub-stages.
+	ActionSteps steps = 8;
+}
+
+// StageMap is a map from stage ID to `Stage`. This has essentially
+// the same structure as `StageConfigMap`, but with each ID mapping
+// to a `Stage` instead of `StageConfig`.
+message StageMap {
+	// values is a map from stage ID to `Stage`.
+	map<string, Stage> values = 1;
+}
+
+// Change holds the configuration and status of the change of a
+// Change Control.
+message Change {
+	// name is the name of the change.
+	google.protobuf.StringValue name = 1;
+	// root_stage_id is the ID of the root stage or the stage that
+	// should execute first.
+	google.protobuf.StringValue root_stage_id = 2;
+	// stages holds a configuration of stages and their statuses.
+	StageMap stages = 3;
+	// notes are any notes associated with the change.
+	google.protobuf.StringValue notes = 4;
+	// time is the time at which the change was last updated.
+	google.protobuf.Timestamp time = 5;
+	// user is the user by which the change was last updated.
+	google.protobuf.StringValue user = 6;
+}
+
+// Flag holds the configuration of a boolean flag plus some
+// information about when and by whom it was set.
+message Flag {
+	// value is the value of the flag (`true` or `false`).
+	google.protobuf.BoolValue value = 1;
+	// notes are any notes associated with the setting of the flag.
+	google.protobuf.StringValue notes = 2;
+	// time is the time at which the flag was last updated.
+	google.protobuf.Timestamp time = 3;
+	// user is the user by which the flag was last updated.
+	google.protobuf.StringValue user = 4;
+}
+
+// TimestampFlag holds the configuration of a timestamp flag
+// plus some information about when and by whom it was set.
+message TimestampFlag {
+	// value is the value of the flag (some timestamp).
+	google.protobuf.Timestamp value = 1;
+	// notes are any notes associated with the setting of the flag.
+	google.protobuf.StringValue notes = 2;
+	// time is the time at which the flag was last updated.
+	google.protobuf.Timestamp time = 3;
+	// user is the user by which the flag was last updated.
+	google.protobuf.StringValue user = 4;
+}
+
+// Creation holds information about when and by whom a Change Control was created.
+message Creation {
+	// time is the time when the Change Control was created.
+	google.protobuf.Timestamp time = 1;
+	// user is the user who created the Change Control.
+	google.protobuf.StringValue user = 2;
+}
+
+// ChangeControlStatus defines the possible execution statuses of
+// a Change Control.
+enum ChangeControlStatus {
+     // CHANGE_CONTROL_STATUS_UNSPECIFIED means the Change Control status is unknown.
+     CHANGE_CONTROL_STATUS_UNSPECIFIED = 0;
+     // CHANGE_CONTROL_STATUS_RUNNING means the Change Control has begun
+     // execution.
+     CHANGE_CONTROL_STATUS_RUNNING = 1;
+     // CHANGE_CONTROL_STATUS_COMPLETED means the Change Control has ceased
+     // execution. Success/failure of a Change Control cannot be inferred
+     // from this status alone but rather this status plus the Change Control
+     // error. That is, no error implies success and some error implies failure.
+     CHANGE_CONTROL_STATUS_COMPLETED = 2;
+     // CHANGE_CONTROL_STATUS_SCHEDULED means the Change Control has been
+     // scheduled for execution at some time. Any failure that occurs during
+     // this process will cause a transition back to the unspecified status,
+     // a reset of the schedule flag by the system, and an error on the change
+     // control reporting the details of the failure.
+     CHANGE_CONTROL_STATUS_SCHEDULED = 3;
+     // CHANGE_CONTROL_STATUS_NOT_STARTED means the Change Control has not been
+     // started. This would include approved and not approved Change Controls.
+     CHANGE_CONTROL_STATUS_NOT_STARTED = 4;
+}
+
+// CompletionReason describes the reason behind the terminal state of an executed Change Control.
+enum CompletionReason {
+    // COMPLETION_REASON_UNSPECIFIED means the completion reason is unknown.
+    COMPLETION_REASON_UNSPECIFIED = 0;
+    // COMPLETION_REASON_SUCCESS means the Change Control completed successfully.
+    COMPLETION_REASON_SUCCESS = 1;
+    // COMPLETION_REASON_FAILED means the Change Control completed due to failure.
+    COMPLETION_REASON_FAILED = 2;
+    // COMPLETION_REASON_STOPPED means the Change Control was stopped by a user.
+    COMPLETION_REASON_STOPPED = 3;
+}
+
+// Filter is used to filter changecontrols for requested device ids.
+message Filter {
+	// device_ids includes the list of device ids to be matched with devices
+	// in the changecontrol state model.
+	// At least one of the provided device ids must be present in CC devices field.
+	fmp.RepeatedString device_ids = 1;
+}
+
+// DeviceToStageMap is a map of a device ID and its list of corresponding stages.
+message DeviceToStageMap {
+	// values maps the device ID with the stages which are associated with a device
+	// in a changecontrol state model.
+	map<string, fmp.RepeatedString> values = 1;
+}
+
+// ChangeControl holds the configuration and status of a Change Control.
+message ChangeControl {
+	option (fmp.model) = "ro";
+	option (fmp.custom_filter) = "Filter";
+
+	// key uniquely identifies the Change Control.
+	ChangeControlKey key = 1;
+	// change holds the configuration and status of the change of
+	// the Change Control.
+	Change change = 2;
+	// approve indicates whether the Change Control was flagged
+	// as approved (`approve.value` set to `true`) or unapproved
+	// (`approve.value` set to `false`).
+	Flag approve = 3;
+	// start indicates whether the Change Control was flagged to
+	// start (`start.value` set to `true`) or stop (`start.value`
+	// set to `false`) execution.
+	Flag start = 4;
+	// status is the execution status of the Change Control.
+	ChangeControlStatus status = 5;
+	// error is any error that occurred during the execution of the
+	// Change Control.
+	google.protobuf.StringValue error = 6;
+	// schedule indicates whether the Change Control was flagged
+	// to be scheduled (`schedule.value` set to some timestamp) or
+	// unscheduled (`schedule.value` set to `nil`) for execution.
+	TimestampFlag schedule = 7;
+	// device_ids is a list of device IDs on which the Change Control will operate.
+	fmp.RepeatedString device_ids = 8;
+	// device_id_to_stage_ids is a map of device IDs to the stages present in the
+	// specified Change state.
+	// This is not affected by the device ID based custom filtering and will contain
+	// info about all the devices associated with a CC ID.
+	DeviceToStageMap device_id_to_stage_ids = 9;
+	// creation holds information about when and by whom the Change Control was created.
+	Creation creation = 10;
+	// completion_reason indicates why the Change Control completed (only relevant when
+	// status is CHANGE_CONTROL_STATUS_COMPLETED).
+	CompletionReason completion_reason = 11;
+	// validation_statuses indicates failed validation statuses for the Change Control.
+	// This is only relevant when one or more devices fail validation.
+	ChangeControlValidationStatuses validation_statuses = 12;
+	// validation_detail contains additional information about the validation statuses.
+	// This is only relevant when one or more devices fail validation.
+	ChangeControlValidationDetail validation_detail = 13;
+	// override_reason indicates user intent to override Change Control validation.
+	OverrideReason override_reason = 14;
+}
+
+// ApproveConfig is used to configure the approval of a Change Control.
+message ApproveConfig {
+	option (fmp.model) = "rw";
+
+	// key uniquely identifies the Change Control.
+	ChangeControlKey key = 1;
+	// approve is the flag to approve (`approve.value` set to `true`)
+	// or unapprove (`approve.value` set to `false`) the Change Control.
+	FlagConfig approve = 2;
+	// version is the timestamp of the Change Control to approve.
+	// This field must be set when `approve.value` is set to `true`
+	// and is intended to safeguard against approving a Change Control
+	// that has been updated since last read.
+	google.protobuf.Timestamp version = 3;
+	// override_reason indicates user intent to override Change Control validation.
+	OverrideReason override_reason = 4;
+}
+
+// ActionSummary provides detailed information about actions in a Change Control.
+message ActionSummary {
+	// id uniquely identifies the action.
+	// For built-in actions: it will be the action identifier (e.g., "setImage", "setConfig")
+	// For custom scripts: it will be the script UUID
+	// For task actions: it will be the task type (e.g., "ADD", "CONFIG_PUSH", "IMAGE_PUSH")
+	google.protobuf.StringValue id = 1;
+
+	// name is the name of the action.
+	google.protobuf.StringValue name = 2;
+
+	// count is the number of times this action appears in the Change Control.
+	google.protobuf.UInt32Value count = 3;
+}
+
+// ActionSummaries contains a list of ActionSummary values.
+message ActionSummaries {
+	// values is a list of ActionSummary.
+	repeated ActionSummary values = 1;
+}
+
+// ChangeControlSummary provides the summary of the Change Control.
+message ChangeControlSummary {
+	option (fmp.model) = "ro";
+	option (fmp.custom_filter) = "Filter";
+
+	// key uniquely identifies the Change Control.
+	ChangeControlKey key = 1;
+
+	// name is the name of the Change Control.
+	google.protobuf.StringValue name = 2;
+
+	// status is the status of the Change Control.
+	ChangeControlStatus status = 3;
+
+	// device_count is the count of the devices impacted in the Change Control.
+	google.protobuf.UInt32Value device_count = 4;
+
+	// action_summaries provides detailed information about each action type used in the Change Control.
+	ActionSummaries action_summaries = 5;
+
+	// created_time is the time at which the Change Control was created.
+	google.protobuf.Timestamp created_time = 6;
+
+	// created_user is the user by whom the Change Control was created.
+	google.protobuf.StringValue created_user = 7;
+
+	// last_edited_time is the time at which the Change Control was last edited.
+	google.protobuf.Timestamp last_edited_time = 8;
+
+	// last_edited_user is the user by whom the Change Control was last edited.
+	google.protobuf.StringValue last_edited_user = 9;
+
+	// last_approved_time is the time of the last approve or unapprove operation.
+	google.protobuf.Timestamp last_approved_time = 10;
+
+	// last_approved_user is the user who performed the last approve or unapprove operation.
+	google.protobuf.StringValue last_approved_user = 11;
+
+	// last_scheduled_time is the time of the last schedule or unschedule operation.
+	google.protobuf.Timestamp last_scheduled_time = 12;
+
+	// last_scheduled_user is the user who performed the last schedule or unschedule operation.
+	google.protobuf.StringValue last_scheduled_user = 13;
+
+	// start_time is the time at which the Change Control execution was started.
+	google.protobuf.Timestamp start_time = 14;
+
+	// start_user is the user who started the Change Control execution.
+	google.protobuf.StringValue start_user = 15;
+
+	// end_time is the time at which the Change Control execution was completed.
+	google.protobuf.Timestamp end_time = 16;
+
+	// error is any error that occurred during the execution of the Change Control.
+	google.protobuf.StringValue error = 17;
+
+	// approved indicates whether the Change Control is currently approved or unapproved.
+	google.protobuf.BoolValue approved = 18;
+
+	// completion_reason indicates why the Change Control completed (only relevant when
+	// status is CHANGE_CONTROL_STATUS_COMPLETED).
+	CompletionReason completion_reason = 19;
+
+	// validation_statuses indicates the active failed validation statuses surfaced
+	// in the Change Control summary. This field may contain multiple values when
+	// more than one validation condition fails. For example, a Change Control may
+	// be obsolete due to ordering and also temporarily blocked by concurrent
+	// execution. An empty value means there are no active validation failures to
+	// surface in the summary.
+	ChangeControlValidationStatuses validation_statuses = 20;
+}
+
+// OverrideReason provides a reason for overriding the validation.
+enum OverrideReason {
+	// OVERRIDE_REASON_UNSPECIFIED indicates that the reason for overriding the validation
+	// is unknown.
+	OVERRIDE_REASON_UNSPECIFIED = 0;
+	// OVERRIDE_REASON_USER_FORCED indicates that the user has overridden the validation and forced
+	// the approval of the Change Control.
+	OVERRIDE_REASON_USER_FORCED = 1;
+}
+
+// ChangeControlValidationStatuses is a list of validation statuses for the Change Control.
+message ChangeControlValidationStatuses {
+	// values is a list of validation statuses.
+	repeated ChangeControlValidationStatus values = 1;
+}
+
+// ChangeControlValidationStatus is used to indicate the status of the Change Control validation.
+enum ChangeControlValidationStatus {
+	// CHANGE_CONTROL_VALIDATION_STATUS_UNSPECIFIED indicates that the validation status
+	// is unknown.
+	CHANGE_CONTROL_VALIDATION_STATUS_UNSPECIFIED = 0;
+	// CHANGE_CONTROL_VALIDATION_STATUS_SUCCESS indicates that the validation has succeeded.
+	CHANGE_CONTROL_VALIDATION_STATUS_SUCCESS = 1;
+	// CHANGE_CONTROL_VALIDATION_STATUS_OBSOLETED indicates that the validation has failed, and the
+	// Change Control has been obsoleted. This is due to the execution of a newer Change Control.
+	CHANGE_CONTROL_VALIDATION_STATUS_OBSOLETED = 2;
+	// CHANGE_CONTROL_VALIDATION_STATUS_CONCURRENT_EXECUTION indicates that validation failed
+	// because execution would conflict with another Change Control that is currently running
+	// on one or more target devices. This Change Control is blocked until the conflicting
+	// execution completes.
+	CHANGE_CONTROL_VALIDATION_STATUS_CONCURRENT_EXECUTION = 3;
+}
+
+// ChangeControlValidationDetail contains validation details for a Change Control.
+message ChangeControlValidationDetail {
+	// devices is a list of devices that failed the Change Control validation.
+	// The failure type is included in the details.
+	DeviceValidationDetails devices = 1;
+}
+
+// DeviceValidationDetails is a list of devices that failed validation, along with details
+// about each failure.
+message DeviceValidationDetails {
+	// values is a list of devices with validation failures.
+	repeated DeviceValidationDetail values = 1;
+}
+
+// DeviceValidationDetail represents a device and its failure type.
+message DeviceValidationDetail {
+	// device_id is the ID of the device.
+	google.protobuf.StringValue device_id = 1;
+	// failure_type indicates the type of validation failure.
+	DeviceValidationFailure failure_type = 2;
+	// metadata is a string that contains additional information related to the failure.
+	// This field may contain multiple values when more than one validation condition fails.
+	// Current failures and their corresponding metadata are:
+	// DEVICE_VALIDATION_FAILURE_CONFIG_OUT_OF_ORDER: ID of the newer Change Control that
+	// caused the designed config to be out of order.
+	// DEVICE_VALIDATION_FAILURE_IMAGE_OUT_OF_ORDER: ID of the newer Change Control that
+	// caused the designed image to be out of order.
+	// DEVICE_VALIDATION_FAILURE_CONCURRENT_EXECUTION: ID of the running Change Control.
+	google.protobuf.StringValue metadata = 3;
+}
+
+// DeviceValidationFailure is used to indicate the type of the validation failure.
+enum DeviceValidationFailure {
+	// DEVICE_VALIDATION_FAILURE_UNSPECIFIED indicates that the reason for the validation failure
+	// is unknown.
+	DEVICE_VALIDATION_FAILURE_UNSPECIFIED = 0;
+	// DEVICE_VALIDATION_FAILURE_CONFIG_OUT_OF_ORDER indicates that the designed config is out of
+	// order due to the execution of a newer Change Control.
+	DEVICE_VALIDATION_FAILURE_CONFIG_OUT_OF_ORDER = 1;
+	// DEVICE_VALIDATION_FAILURE_IMAGE_OUT_OF_ORDER indicates that the designed image is out of
+	// order due to the execution of a newer Change Control.
+	DEVICE_VALIDATION_FAILURE_IMAGE_OUT_OF_ORDER = 2;
+	// DEVICE_VALIDATION_FAILURE_CONCURRENT_EXECUTION indicates that the device is currently
+	// executing another Change Control.
+	DEVICE_VALIDATION_FAILURE_CONCURRENT_EXECUTION = 3;
+}
