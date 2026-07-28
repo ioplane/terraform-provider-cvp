@@ -40,7 +40,7 @@ cmd_new() {
   git -C "$REPO_ROOT" worktree add -b "$branch" "$path" "origin/${DEFAULT_BASE}" 2>/dev/null \
     || git -C "$REPO_ROOT" worktree add -b "$branch" "$path" "$DEFAULT_BASE"
   echo "worktree ready: $path"
-  echo "  cd '$path' && make up && make shell"
+  echo "  cd '$path' && task up && task shell"
 }
 
 cmd_list() { git -C "$REPO_ROOT" worktree list; }

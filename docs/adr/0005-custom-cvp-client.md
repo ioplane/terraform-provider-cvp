@@ -30,7 +30,7 @@ definitions using **buf**, instead of depending on `cloudvision-go`.
   spell-check, and code review.
 - Hand-written client wrapper (retry, auth, helpers) stays in
   `internal/client/cvp/` and imports `internal/pb`.
-- Make targets: `task proto` (generate), `task proto-lint`, `task proto-breaking`.
+- Task targets: `task proto` (generate), `task proto-lint`, `task proto-breaking`.
 
 ## Consequences
 

@@ -113,13 +113,21 @@ def cmd_up(settings: Settings) -> int:
             if rc:
                 return rc
 
+        # Forward caller-provided lab credentials so acceptance commands run
+        # through `build.py exec` can authenticate, mirroring compose.dev.yml.
+        environment = dict(_DEV_ENVIRONMENT)
+        for var in ("CVP_ENDPOINT", "CVP_AUTH_METHOD", "CVP_TOKEN", "TF_ACC"):
+            value = os.environ.get(var)
+            if value:
+                environment[var] = value
+
         container = podman.containers.create(
             image=DEV_IMAGE,
             name=DEV_CONTAINER,
             command=["sleep", "infinity"],
             working_dir="/app",
             mounts=[{"type": "bind", "source": str(REPO_ROOT), "target": "/app", "read_only": False}],
-            environment=dict(_DEV_ENVIRONMENT),
+            environment=environment,
             cap_drop=["ALL"],
             security_opt=["no-new-privileges:true"],
             restart_policy={"Name": "unless-stopped"},

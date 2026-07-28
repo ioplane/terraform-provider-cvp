@@ -90,6 +90,7 @@
     "paralleltest",
     "tparallel",
     "nolint",
+    "nosec",
     "unparam",
     "gomodguard",
     "CAPEM",

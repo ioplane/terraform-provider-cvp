@@ -8,7 +8,9 @@ description = "podman-py automation for the terraform-provider-cvp dev container
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "terraform-provider-cvp contributors" }]
-dependencies = ["podman>=5.7"]
+# Pinned exactly so `uv run` (with uv.lock ignored) resolves the same podman-py
+# as the dev image (PODMAN_PY_VERSION), keeping the ty gate reproducible.
+dependencies = ["podman==5.7.0"]
 
 [tool.ruff]
 target-version = "py311"
