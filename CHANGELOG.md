@@ -52,9 +52,13 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   and `WorkspaceService.GetOne` are now available to `internal/client/cvp`.
 - **`arista.studio.v1` gRPC stubs.** Vendored `arista/studio.v1/{studio,services.gen}.proto`
   at the same pinned revision (no new transitive imports) and generated the Go
-  stubs, exposing `InputsConfigService` (GetOne/GetAll/Set/Delete) and
-  `SecretInputService` — the backing services for the upcoming `cvp_studio_inputs`
-  resource (design.md D1/D5/D6).
+  stubs. The upcoming `cvp_studio_inputs` resource is backed by
+  **`InputsConfigService`** (GetOne/GetAll/Set/Delete); secret inputs are written
+  through it as **write-only** attributes (design.md D1/D5/D6). The generated
+  read-only `SecretInputService` (Get/Subscribe only, returns the *unmasked*
+  value) is **deliberately not consumed** by the provider — reading it would pull
+  plaintext secrets into provider memory and violate D6; it is reserved for UI /
+  ops tooling.
 - **`internal/client/cvp` connection foundation.** A gRPC/TLS client with the
   three auth methods (design.md D4, evidence: the CVP authz model in
   `arista-cvp-re`): `bearer`/`session` attach `authorization: Bearer <token>`
