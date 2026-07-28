@@ -25,8 +25,9 @@ change control declaratively over gRPC/TLS, built on the
 > [!NOTE]
 > **Status: v0.2 in progress.** `cvp_workspace` (CRUD, import, workflow
 > **Actions**) and `cvp_studio_inputs` (CRUD, import) are fully wired with live
-> acceptance green against the lab. `cvp_change_control` remains a schema-only
-> stub (`TODO(P1)`). See [`design.md`](design.md) (D9) and
+> acceptance green against the lab. `cvp_change_control`'s design is frozen
+> (data source + approve/start Actions, [ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md));
+> its implementation is evidence-gated. See [`design.md`](design.md) (D9) and
 > [ADR 0006](docs/adr/0006-workspace-resource-and-actions.md) for the workspace
 > design, and [`AGENTS.md`](AGENTS.md) for how to work here.
 
@@ -56,7 +57,7 @@ flowchart LR
 |---|---|---|
 | `cvp_workspace` | `arista.workspace.v1.WorkspaceConfigService` | **full CRUD + import** |
 | `cvp_studio_inputs` | `arista.studio.v1.InputsConfigService` | **full CRUD + import** |
-| `cvp_change_control` | `arista.changecontrol.v1.*` | schema only |
+| `cvp_change_control` | `arista.changecontrol.v1.*` | design frozen (data source + actions, [ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)) |
 
 ## Actions
 
