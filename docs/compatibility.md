@@ -17,7 +17,7 @@ breaking change post-1.0).
 | Plugin protocol | **6.0** (`terraform-registry-manifest.json`) |
 | Framework | `terraform-plugin-framework` **v1.19.0** |
 | Go (build) | **1.26** |
-| Lab validated against | netlab2 CloudVision Portal (`um-cvp.infra4.dev`) |
+| Lab validated against | the netlab2 CloudVision Portal lab |
 
 The provider is a single protocol-6 server; every capability below travels that
 one protocol. A newer _core_ is required only for the capability that uses it —

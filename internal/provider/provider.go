@@ -59,7 +59,7 @@ func (p *cvpProvider) Schema(ctx context.Context, req provider.SchemaRequest, re
 		MarkdownDescription: "Arista CloudVision Portal provider. Prototype.",
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "CVP gRPC endpoint (e.g. `um-cvp01.infra4.dev:443`).",
+				MarkdownDescription: "CVP gRPC endpoint (e.g. `cvp.example.com:443`).",
 				Required:            true,
 			},
 			"auth_method": schema.StringAttribute{

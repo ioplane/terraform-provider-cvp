@@ -37,8 +37,9 @@ in the `commit-msg` pre-commit hook and on PR titles in CI.
 ## Scopes
 
 Enumerated in `.commitlintrc.yaml` — one of: `provider`, `workspace`, `studio`,
-`configlet`, `changecontrol`, `tag`, `device`, `aaa`, `client`, `auth`, `docs`,
-`examples`, `ci`, `build`, `deps`, `release`, `test`, `lint`, `repo`.
+`configlet`, `changecontrol`, `tag`, `device`, `aaa`, `client`, `auth`,
+`functions`, `actions`, `docs`, `examples`, `ci`, `build`, `deps`, `release`,
+`test`, `lint`, `repo`.
 
 ## Breaking changes
 

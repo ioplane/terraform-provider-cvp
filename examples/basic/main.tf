@@ -11,7 +11,7 @@ terraform {
 }
 
 provider "cvp" {
-  endpoint    = "um-cvp01.infra4.dev:443"
+  endpoint    = "cvp.example.com:443"
   auth_method = "cert"
   cert_pem    = file("${path.module}/certs/user.crt")
   key_pem     = file("${path.module}/certs/user.key")
