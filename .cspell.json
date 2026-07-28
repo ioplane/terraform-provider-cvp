@@ -140,7 +140,11 @@
     "semgrep",
     "Semgrep",
     "SARIF",
-    "minversion"
+    "minversion",
+    "SonarQube",
+    "SonarCloud",
+    "Sonar",
+    "Qube"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

@@ -28,8 +28,9 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
     SHA-pinned GitHub Actions workflows (CI, release, security, Scorecard,
     dependency-review) plus Dependabot; SAST via **Semgrep** — `task semgrep`
     (host, Pro rules via login) for local runs, and a `semgrep ci` CI job using
-    the `SEMGREP_APP_TOKEN` secret (Pro rules); `.env.example` documents the
-    local token variables.
+    the `SEMGREP_APP_TOKEN` secret (Pro rules); **SonarCloud** static analysis
+    (`sonar-project.properties` + a SonarQube CI job with Go coverage, using the
+    `SONAR_TOKEN` secret); `.env.example` documents the local token variables.
   - Governance: `AGENTS.md` (+ `CODEX.md` / `CLAUDE.md` pointers), Apache-2.0
     `LICENSE`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`,
     `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates, `VERSION`, and this
