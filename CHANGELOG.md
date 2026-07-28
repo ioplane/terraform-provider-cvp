@@ -57,6 +57,11 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   failures (`UNAVAILABLE`) retry with exponential backoff (D7). The provider
   `Configure` now builds the client and surfaces config errors as attribute
   diagnostics. Unit-tested (config validation, bearer metadata, TLS creds).
+- **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
+  managed identity, ephemeral/write-only, functions, `terraform test`),
+  Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC
+  credentials, Sentinel/OPA, run tasks, no-code modules, Stacks) capabilities to
+  CVP, with priorities. Flags the "workflow verbs as Actions" contract question.
 
 ### Changed
 

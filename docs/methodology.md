@@ -93,6 +93,13 @@ is cited in the resource's package comment or the commit body. Unverified
 assumptions are labelled and kept non-load-bearing. This is what keeps a
 reverse-engineered target from drifting into guesswork.
 
+## Backlog
+
+Capabilities and ideas beyond the committed roadmap live in
+[`backlog.md`](backlog.md) — modern Terraform / Terragrunt / enterprise features
+mapped to CVP, prioritized P0/P1/P2. A backlog item graduates to an ADR + a
+sprint once it clears the Definition of Ready below.
+
 ## Definition of ready (before a resource enters a sprint)
 
 - CVP service + RPC identified and reachable in the lab.
