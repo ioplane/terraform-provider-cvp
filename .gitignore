@@ -44,6 +44,11 @@ scripts/automation/uv.lock
 **/terraform.tfstate.backup
 **/crash.log
 
+# Secrets / local env — NEVER commit
+.env
+.env.*
+!.env.example
+
 # IDE
 .idea/
 .vscode/

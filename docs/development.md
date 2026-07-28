@@ -21,8 +21,9 @@ run everything with `task <name>`.
 
 `task semgrep` runs the **host** Semgrep so it uses your `semgrep login` session
 and **Pro rules**; running it token-less inside the container would fall back to
-OSS-only coverage. In CI, Semgrep runs via the **Semgrep AppSec Platform**
-integration (Pro), which posts its own PR checks.
+OSS-only coverage. In CI, a `semgrep ci` job uses the `SEMGREP_APP_TOKEN`
+repository secret for Pro rules. Copy [`.env.example`](../.env.example) to `.env`
+(git-ignored) for local token variables.
 
 The container (`golang:1.26-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))

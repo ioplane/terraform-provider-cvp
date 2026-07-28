@@ -52,10 +52,25 @@ jobs:
           sarif_file: gosec.sarif
           category: gosec
 
-  # Semgrep runs as a CI gate via the Semgrep AppSec Platform integration
-  # (Pro rules + token), which posts its own PR checks. It is intentionally not
-  # duplicated here as an OSS-only, token-less job. Locally, run `task semgrep`
-  # (host Semgrep, uses your login for Pro rules).
+  semgrep:
+    name: Semgrep (SAST · Pro)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # `semgrep ci` needs the platform token (Pro rules); fork PRs and Dependabot
+    # do not receive secrets, so skip them — the Semgrep App still covers those.
+    if: github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.fork != true
+    container:
+      image: semgrep/semgrep:1.168.0
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: semgrep ci
+        run: semgrep ci
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
   trivy:
     name: Trivy filesystem scan
