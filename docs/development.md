@@ -14,9 +14,15 @@ Only these host tools are needed — everything else lives in the dev container.
 | `podman-compose` | 1.5 | 1.5.0 |
 | `podman-py` (automation) | 5.5 | 5.7.0 |
 | `gopass` (secrets) | any | ✓ |
+| [`semgrep`](https://semgrep.dev) (host SAST) | 1.100 | 1.168.0 |
 
 Install `task` per <https://taskfile.dev/installation/> (single Go binary), then
 run everything with `task <name>`.
+
+`task semgrep` runs the **host** Semgrep so it uses your `semgrep login` session
+and **Pro rules**; running it token-less inside the container would fall back to
+OSS-only coverage. In CI, Semgrep runs via the **Semgrep AppSec Platform**
+integration (Pro), which posts its own PR checks.
 
 The container (`golang:1.26-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))

@@ -26,8 +26,9 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   - `Taskfile.yml` (container-driven), `.goreleaser.yml` v2 (GPG-signed
     `SHA256SUMS` + SPDX SBOM per the Terraform Registry contract), and
     SHA-pinned GitHub Actions workflows (CI, release, security, Scorecard,
-    dependency-review) plus Dependabot; SAST via **Semgrep** (`task semgrep` +
-    a CI job scanning Go/Terraform/Dockerfile/Actions/secrets, SARIF-reported).
+    dependency-review) plus Dependabot; SAST via **Semgrep** — `task semgrep`
+    (host, Pro rules via login) for local runs, and the Semgrep AppSec Platform
+    (Pro) integration for the CI gate.
   - Governance: `AGENTS.md` (+ `CODEX.md` / `CLAUDE.md` pointers), Apache-2.0
     `LICENSE`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`,
     `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates, `VERSION`, and this

@@ -96,9 +96,9 @@ tasks:
     desc: gosec only (via golangci-lint).
     cmds: ["{{.EXEC}} golangci-lint run --enable-only gosec ./..."]
   semgrep:
-    desc: SAST with Semgrep (in-container via uv; Go + Terraform + Dockerfile + Actions + secrets).
+    desc: SAST with Semgrep (host tool — uses your login for Pro rules; Go/Terraform/Dockerfile/Actions/secrets).
     cmds:
-      - "{{.EXEC}} sh -c 'uv tool run semgrep@1.168.0 scan {{.SEMGREP_CONFIG}} --metrics=off --disable-version-check --error'"
+      - "semgrep scan {{.SEMGREP_CONFIG}} --metrics=off --disable-version-check --error"
 
   # === Python automation (podman-py) — uv + ruff + ty ===
   lint-py:
