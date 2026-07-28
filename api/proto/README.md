@@ -38,7 +38,18 @@ api/proto/
 Pin the upstream revision in the commit message; treat a proto bump like any
 other dependency bump (`build(deps)` commit, CHANGELOG entry).
 
-> **Status:** empty at v0.1. Populating this directory + generating
-> `internal/pb` is the first step of the P1 gRPC-wiring work
-> (`internal/client/cvp`). Until then the provider builds without any CVP proto
-> dependency.
+## Current vendored closure
+
+Vendored from `cloudvision-apis` — the `arista/workspace.v1` import closure
+(computed with `buf build … | buf ls-files --include-imports`); Google
+well-known types are provided by buf and not vendored:
+
+```text
+arista/workspace.v1/{workspace,services.gen}.proto
+arista/{configstatus.v1,imagestatus.v1,subscriptions,time}/*.proto
+fmp/{deletes,extensions,wrappers}.proto
+```
+
+The pinned upstream revision is recorded in `.upstream-revision`. `buf lint`
+skips these vendored trees (see `buf.yaml`); `task proto` regenerates
+`internal/pb` deterministically.

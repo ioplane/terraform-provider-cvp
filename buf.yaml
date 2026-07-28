@@ -15,8 +15,11 @@ modules:
 lint:
   use:
     - STANDARD
-  # Vendored third-party protos: do not fail our lint on Arista's naming.
-  disallow_comment_ignores: false
+  # Everything under api/proto is vendored from Arista's cloudvision-apis; we do
+  # not author these, so their proto style is out of scope for our lint.
+  ignore:
+    - api/proto/arista
+    - api/proto/fmp
 
 breaking:
   use:

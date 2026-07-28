@@ -45,6 +45,11 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
     (`docs/methodology.md`).
   - Mandatory git-worktree + Pull-Request-only workflow (`scripts/worktree.sh`);
     branch protection ruleset on `main`.
+- **CVP gRPC stubs (`internal/pb`).** Vendored the `arista.workspace.v1` proto
+  import closure from `cloudvision-apis` (pinned revision) under `api/proto/` and
+  generated the Go message + gRPC-client stubs via `buf` (`task proto`,
+  deterministic). First step of the P1 gRPC wiring (ADR 0005); `WorkspaceConfigService.Set/Delete`
+  and `WorkspaceService.GetOne` are now available to `internal/client/cvp`.
 
 ### Changed
 
