@@ -2,17 +2,16 @@ package provider
 
 import (
 	"context"
-	"crypto/tls"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
+	"github.com/ioplane/terraform-provider-cvp/internal/client/cvp"
 	changecontrolres "github.com/ioplane/terraform-provider-cvp/internal/resources/change_control"
 	inputsres "github.com/ioplane/terraform-provider-cvp/internal/resources/studio_inputs"
 	workspaceres "github.com/ioplane/terraform-provider-cvp/internal/resources/workspace"
@@ -38,13 +37,6 @@ type providerModel struct {
 	KeyPEM      types.String `tfsdk:"key_pem"`
 	CAPEM       types.String `tfsdk:"ca_pem"`
 	InsecureTLS types.Bool   `tfsdk:"insecure_tls"`
-}
-
-// ClientBundle propagated to each resource's Configure hook. Wraps
-// gRPC conn + auth-method for chargen.v1, studio.v1, workspace.v1, changecontrol.v1.
-type ClientBundle struct {
-	Conn *grpc.ClientConn
-	Auth string // session / cert / bearer
 }
 
 func (p *cvpProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -97,45 +89,70 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		return
 	}
 
-	creds, diags := buildTLSCreds(&cfg)
-	resp.Diagnostics.Append(diags...)
+	// If any value is unknown (a reference to a not-yet-applied resource),
+	// ValueString/ValueBool would collapse it to a zero value and build a
+	// mis-configured client. Refuse to configure until the value is known.
+	for _, u := range []struct {
+		attr    string
+		unknown bool
+	}{
+		{"endpoint", cfg.Endpoint.IsUnknown()},
+		{"auth_method", cfg.AuthMethod.IsUnknown()},
+		{"token", cfg.Token.IsUnknown()},
+		{"cert_pem", cfg.CertPEM.IsUnknown()},
+		{"key_pem", cfg.KeyPEM.IsUnknown()},
+		{"ca_pem", cfg.CAPEM.IsUnknown()},
+		{"insecure_tls", cfg.InsecureTLS.IsUnknown()},
+	} {
+		if u.unknown {
+			resp.Diagnostics.AddAttributeError(path.Root(u.attr),
+				"Unknown provider configuration value",
+				"The CVP provider cannot be configured while "+u.attr+" is unknown. "+
+					"Set it to a static value or apply the resource it references first.")
+		}
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// grpc.NewClient is the non-blocking successor to the deprecated
-	// DialContext/WithBlock pair (gRPC ≥ 1.63); the connection is established
-	// lazily on the first RPC. P1 CRUD is responsible for surfacing dial-time
-	// failures as diagnostics.
-	conn, err := grpc.NewClient(
-		cfg.Endpoint.ValueString(),
-		grpc.WithTransportCredentials(creds),
-	)
+	client, err := cvp.New(cvp.Config{
+		Endpoint:    cfg.Endpoint.ValueString(),
+		AuthMethod:  cfg.AuthMethod.ValueString(),
+		Token:       cfg.Token.ValueString(),
+		CertPEM:     []byte(cfg.CertPEM.ValueString()),
+		KeyPEM:      []byte(cfg.KeyPEM.ValueString()),
+		CAPEM:       []byte(cfg.CAPEM.ValueString()),
+		InsecureTLS: cfg.InsecureTLS.ValueBool(),
+	})
 	if err != nil {
-		resp.Diagnostics.AddError("gRPC client creation failed", err.Error())
+		mapClientError(err, resp)
 		return
 	}
 
-	bundle := &ClientBundle{Conn: conn, Auth: cfg.AuthMethod.ValueString()}
-	resp.DataSourceData = bundle
-	resp.ResourceData = bundle
+	// The lazy gRPC client is shared with every resource/data source via
+	// ProviderData; resources type-assert it to *cvp.Client in Configure.
+	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
-// buildTLSCreds derives the transport credentials from the provider config.
-// P1 wires cert/session/bearer material and populates diagnostics on parse
-// errors; the returned diagnostics are intentionally empty in the skeleton.
-//
-//nolint:unparam // diags are populated when cert/session parsing lands (P1).
-func buildTLSCreds(cfg *providerModel) (credentials.TransportCredentials, diag.Diagnostics) {
-	if cfg.InsecureTLS.ValueBool() {
-		// Guarded by the documented, opt-in `insecure_tls` provider flag; never a
-		// default (see SECURITY.md). `//nolint:gosec` suppresses golangci's
-		// embedded gosec; the trailing `//#nosec G402` suppresses standalone
-		// gosec (CI). CodeQL's equivalent alert is dismissed as intentional.
-		//nolint:gosec // opt-in insecure_tls lab flag, not the default path.
-		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS13}), nil //#nosec G402
+// mapClientError turns cvp client-construction errors into actionable,
+// attribute-scoped diagnostics.
+func mapClientError(err error, resp *provider.ConfigureResponse) {
+	switch {
+	case errors.Is(err, cvp.ErrEndpointRequired):
+		resp.Diagnostics.AddAttributeError(path.Root("endpoint"), "endpoint is required", err.Error())
+	case errors.Is(err, cvp.ErrUnknownAuthMethod):
+		resp.Diagnostics.AddAttributeError(path.Root("auth_method"),
+			"invalid auth_method", "auth_method must be one of cert, session or bearer.")
+	case errors.Is(err, cvp.ErrTokenRequired):
+		resp.Diagnostics.AddAttributeError(path.Root("token"),
+			"token is required", "auth_method session/bearer requires token.")
+	case errors.Is(err, cvp.ErrClientCertRequired):
+		resp.Diagnostics.AddAttributeError(path.Root("cert_pem"),
+			"client certificate is required", "auth_method cert requires cert_pem and key_pem.")
+	default:
+		resp.Diagnostics.AddError("CVP client initialisation failed", err.Error())
 	}
-	return credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13}), nil
 }
 
 func (p *cvpProvider) Resources(ctx context.Context) []func() resource.Resource {

@@ -148,7 +148,13 @@
     "Sonar",
     "Qube",
     "shieldcn",
-    "shadcn"
+    "shadcn",
+    "workspacev",
+    "certhdr",
+    "initialisation",
+    "aerisadmin",
+    "cvpservice",
+    "tmpl"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

@@ -50,6 +50,13 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   generated the Go message + gRPC-client stubs via `buf` (`task proto`,
   deterministic). First step of the P1 gRPC wiring (ADR 0005); `WorkspaceConfigService.Set/Delete`
   and `WorkspaceService.GetOne` are now available to `internal/client/cvp`.
+- **`internal/client/cvp` connection foundation.** A gRPC/TLS client with the
+  three auth methods (design.md D4, evidence: the CVP authz model in
+  `arista-cvp-re`): `bearer`/`session` attach `authorization: Bearer <token>`
+  per-RPC, `cert` uses client mTLS; TLS 1.3 minimum, optional pinned CA. Transient
+  failures (`UNAVAILABLE`) retry with exponential backoff (D7). The provider
+  `Configure` now builds the client and surfaces config errors as attribute
+  diagnostics. Unit-tested (config validation, bearer metadata, TLS creds).
 
 ### Changed
 
