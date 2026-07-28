@@ -1,6 +1,6 @@
 resource "cvp_studio_inputs" "rack3_bgp" {
-  workspace_id = cvp_workspace.bgp_as_bump.id
-  studio_id    = "1dd135ac-e1f3-4dd2-9b57-2bf1dbc3fa86" # EVPN Services with ESI Support
+  workspace_id = cvp_workspace.bgp_as_bump.workspace_id
+  studio_id    = "studio-l3ls" # studio id (slug); an empty path targets the studio root
   path         = ["tenants", "[name=default]", "vrfs", "[name=RED]", "lbBgp"]
 
   inputs_json = jsonencode({

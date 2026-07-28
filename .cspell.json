@@ -27,6 +27,8 @@
     "cerr",
     "jsonencode",
     "vrfs",
+    "segs",
+    "studiov",
     "cvaas",
     "cvprac",
     "configlet",
