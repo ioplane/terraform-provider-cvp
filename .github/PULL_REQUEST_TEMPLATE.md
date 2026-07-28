@@ -14,9 +14,9 @@ It is validated by the commitlint CI job.
 
 ## Checklist
 
-- [ ] `make all` passes locally (build + test + lint + tffmt-check + lint-docs + vulncheck).
-- [ ] Resource-touching changes: `make verify` passes (live CVP acceptance tests) and the `N/N acceptance tests pass` line is quoted in the PR body.
+- [ ] `task all` passes locally (build + test + lint + tffmt-check + lint-docs + vulncheck).
+- [ ] Resource-touching changes: `task verify` passes (live CVP acceptance tests) and the `N/N acceptance tests pass` line is quoted in the PR body.
 - [ ] `CHANGELOG.md` `[Unreleased]` updated for every user-visible change.
-- [ ] Registry docs regenerated (`make docs`) if schema changed.
+- [ ] Registry docs regenerated (`task docs`) if schema changed.
 - [ ] New Arista-behaviour claims are corroborated via `arista-mcp` and cited.
 - [ ] No secrets, credentials, or environment identifiers added.

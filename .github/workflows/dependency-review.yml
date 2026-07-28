@@ -29,4 +29,8 @@ jobs:
             AGPL-3.0-only, AGPL-3.0-or-later,
             LGPL-2.0-only, LGPL-2.1-only, LGPL-2.1-or-later,
             LGPL-3.0-only, LGPL-3.0-or-later
+          # CI-only GitHub Actions are not linked into the Apache-2.0 provider,
+          # so their (weak-copyleft) licenses are exempt from the product policy.
+          allow-dependencies-licenses: >-
+            pkg:githubactions/SonarSource/sonarqube-scan-action
           comment-summary-in-pr: on-failure

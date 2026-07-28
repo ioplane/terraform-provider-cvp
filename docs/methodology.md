@@ -44,7 +44,7 @@ flowchart LR
 
   subgraph loop["Implementation — iterative sprints"]
     direction LR
-    s1["sprint N"] --> s2["per-resource<br/>Definition of Done"] --> s3["make verify<br/>+ lab evidence"]
+    s1["sprint N"] --> s2["per-resource<br/>Definition of Done"] --> s3["task verify<br/>+ lab evidence"]
     s3 -. "next resource" .-> s1
   end
   I -. "expands into" .-> loop
@@ -76,7 +76,7 @@ sprint log.
 - **Per-resource Definition of Done** is the unit of progress — see
   [`standards/terraform-provider-best-practices.md`](standards/terraform-provider-best-practices.md)
   § "Definition of done".
-- **Quality gates** (`make all` / `make verify`) are the automated part of the
+- **Quality gates** (`task all` / `task verify`) are the automated part of the
   gate; a resource is not "done" until they are green with lab evidence quoted
   in the commit/PR.
 

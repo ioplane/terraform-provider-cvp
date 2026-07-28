@@ -4,7 +4,7 @@
 
 `buf generate` (driven by [`../../buf.gen.yaml`](../../buf.gen.yaml)) writes the
 Go message and gRPC client stubs here from the vendored protos in
-[`../../api/proto`](../../api/proto). Regenerate with `make proto`.
+[`../../api/proto`](../../api/proto). Regenerate with `task proto`.
 
 These files are excluded from linters, spell-check, and code review
 (`golangci-lint generated: strict`, `.gitattributes linguist-generated`,

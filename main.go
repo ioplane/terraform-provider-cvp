@@ -15,7 +15,7 @@ import (
 	"github.com/ioplane/terraform-provider-cvp/internal/provider"
 )
 
-// Injected at build time via -ldflags (see Makefile / .goreleaser.yml).
+// Injected at build time via -ldflags (see Taskfile.yml / .goreleaser.yml).
 var (
 	version = "dev"
 	commit  = ""

@@ -26,7 +26,7 @@ standards rather than a single vendor's tooling.
 - One toolchain definition (`Containerfile.dev`) is the single source of truth
   for tool versions; `make`, raw `podman-compose`, and `scripts/automation/`
   (podman-py) are three entry points to it.
-- No host Go required; contributor onboarding is `make up && make shell`.
+- No host Go required; contributor onboarding is `task up && task shell`.
 - Rootless-friendly, daemonless, and vendor-neutral (Docker-compatible via the
   compose-spec if a contributor prefers it).
 - Base image floats within the `1.26` minor for patch pickup; exact tool

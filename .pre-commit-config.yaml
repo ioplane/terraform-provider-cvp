@@ -38,16 +38,23 @@ repos:
 
   - repo: local
     hooks:
-      - id: gofmt-golangci
-        name: golangci-lint (container)
-        entry: bash -c 'podman-compose -f deployments/compose/compose.dev.yml exec -T dev golangci-lint run ./...'
+      - id: golangci-lint
+        name: golangci-lint (task lint)
+        entry: task lint
         language: system
         types: [go]
         pass_filenames: false
 
       - id: terraform-fmt
-        name: terraform fmt (examples)
-        entry: bash -c 'podman-compose -f deployments/compose/compose.dev.yml exec -T dev terraform fmt -check -recursive examples'
+        name: terraform fmt (task tffmt-check)
+        entry: task tffmt-check
         language: system
         files: '\.tf$'
+        pass_filenames: false
+
+      - id: ruff-ty
+        name: python automation lint (task lint-py)
+        entry: task lint-py
+        language: system
+        files: '^scripts/automation/.*\.py$'
         pass_filenames: false

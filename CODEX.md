@@ -15,7 +15,7 @@ standards, tooling (LSP + `context7`/`arista-mcp` MCP), the netlab2 CVP lab,
 - Standards: SemVer 2.0.0 · Conventional Commits 1.0.0 · Keep a Changelog 1.1.0,
   detailed under [`docs/standards/`](docs/standards/).
 - Methodology: gated-iterative delivery — [`docs/methodology.md`](docs/methodology.md).
-- Dev loop: Podman + `podman-compose`, `golang:1.26-trixie` — `make up && make shell`.
+- Dev loop: Podman + `podman-compose`, `golang:1.26-trixie` — `task up && task shell`.
 
 Future work starts from the skeleton and the design in [`design.md`](design.md).
 Do not assert CVP behaviour without corroborating it via `arista-mcp` and, where

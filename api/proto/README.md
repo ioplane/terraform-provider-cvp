@@ -26,10 +26,10 @@ api/proto/
 
 1. Pull the pinned upstream revision (record the commit in the PR body).
 2. Copy only the needed service files + their imports under `api/proto/`.
-3. `make proto-lint` — buf lint.
-4. `make proto-breaking` — buf breaking-change check against the previous revision.
-5. `make proto` — regenerate `internal/pb`.
-6. `make build test` — confirm the generated client still compiles and passes.
+3. `task proto-lint` — buf lint.
+4. `task proto-breaking` — buf breaking-change check against the previous revision.
+5. `task proto` — regenerate `internal/pb`.
+6. `task build test` — confirm the generated client still compiles and passes.
 
 Pin the upstream revision in the commit message; treat a proto bump like any
 other dependency bump (`build(deps)` commit, CHANGELOG entry).

@@ -128,10 +128,12 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 //nolint:unparam // diags are populated when cert/session parsing lands (P1).
 func buildTLSCreds(cfg *providerModel) (credentials.TransportCredentials, diag.Diagnostics) {
 	if cfg.InsecureTLS.ValueBool() {
-		// Guarded by the documented, opt-in `insecure_tls` provider flag; never
-		// a default. See SECURITY.md.
-		//nolint:gosec // G402: opt-in lab-only flag, not the default path.
-		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}), nil
+		// Guarded by the documented, opt-in `insecure_tls` provider flag; never a
+		// default (see SECURITY.md). `//nolint:gosec` suppresses golangci's
+		// embedded gosec; the trailing `//#nosec G402` suppresses standalone
+		// gosec (CI). CodeQL's equivalent alert is dismissed as intentional.
+		//nolint:gosec // opt-in insecure_tls lab flag, not the default path.
+		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS13}), nil //#nosec G402
 	}
 	return credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13}), nil
 }

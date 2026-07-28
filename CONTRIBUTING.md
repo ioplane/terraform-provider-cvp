@@ -22,9 +22,9 @@ Everything runs inside the Podman dev container — no host Go toolchain is
 required. See [`docs/development.md`](docs/development.md).
 
 ```bash
-make up        # build + start the dev container
-make shell     # open a shell inside it
-make all       # build + test + lint + tffmt-check + lint-docs + vulncheck
+task up        # build + start the dev container
+task shell     # open a shell inside it
+task all       # build + test + lint + tffmt-check + lint-docs + vulncheck
 ```
 
 ## Workflow — worktree + Pull Request only
@@ -44,8 +44,8 @@ merges — branch protection enforces it (see [`GOVERNANCE.md`](GOVERNANCE.md)).
    Branch kinds: `feat/<scope>/<name>`, `fix/<scope>/<name>`,
    `chore/<scope>/<name>`, or `sprint/<id>-<scope>` (one branch per sprint).
 2. `cd` into the worktree; develop inside the dev container.
-3. `make all` must pass before pushing. Resource-touching changes must also pass
-   `make verify` (live acceptance tests against the netlab2 CVP lab — see
+3. `task all` must pass before pushing. Resource-touching changes must also pass
+   `task verify` (live acceptance tests against the netlab2 CVP lab — see
    [`AGENTS.md`](AGENTS.md)).
 4. Commit messages follow Conventional Commits 1.0.0; the scope is one of the
    values in `.commitlintrc.yaml`.
@@ -60,16 +60,19 @@ merges — branch protection enforces it (see [`GOVERNANCE.md`](GOVERNANCE.md)).
 
 | Gate | Command |
 |---|---|
-| Build | `make build` |
-| Unit tests + race | `make test` |
-| Acceptance (live CVP) | `make testacc` |
-| Go static analysis (golangci-lint v2) | `make lint` |
-| Vulnerabilities | `make vulncheck` · `make osv-scan` |
-| Terraform formatting | `make tffmt-check` |
-| Registry docs | `make docs-check` |
-| Docs lint (md + yaml + spell) | `make lint-docs` |
+| Build | `task build` |
+| Unit tests + race | `task test` |
+| Acceptance (live CVP) | `task testacc` |
+| Go static analysis (golangci-lint v2) | `task lint` |
+| Vulnerabilities | `task vulncheck` · `task osv-scan` |
+| Terraform formatting | `task tffmt-check` |
+| Registry docs | `task docs-check` |
+| Docs lint (md + yaml + spell) | `task lint-docs` |
 
-A PR may not merge while any `error`-tier golangci-lint finding is unresolved.
+The lint gate is **zero-findings**: `golangci-lint run` exits non-zero on any
+finding, so a PR may not merge while any golangci-lint finding is unresolved.
+The `error`/`warning` severity tiers classify findings for triage; they do not
+change the exit code.
 
 ## Definition of done (per resource)
 

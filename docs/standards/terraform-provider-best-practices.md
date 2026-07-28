@@ -81,7 +81,7 @@ Grounded against the framework via the `context7` MCP.
    network error).
 8. ≥ 1 acceptance test incl. an `ImportState` verify step, green against the lab.
 9. Drift: an out-of-band CVP edit is reported by `terraform plan -refresh-only`.
-10. Registry docs regenerated (`make docs`) and `make docs-check` clean.
+10. Registry docs regenerated (`task docs`) and `task docs-check` clean.
 11. `CHANGELOG.md` `[Unreleased]` updated.
 12. New Arista-behaviour claims corroborated via `arista-mcp` and cited.
 

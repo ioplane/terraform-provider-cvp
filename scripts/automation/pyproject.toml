@@ -1,0 +1,42 @@
+# Python automation harness (podman-py) for terraform-provider-cvp.
+# Linted with ruff and type-checked with ty (Astral), run via uv — mirrors the
+# pulumi-eos house standard. See ../../docs/development.md.
+[project]
+name = "tf-cvp-automation"
+version = "0.1.0"
+description = "podman-py automation for the terraform-provider-cvp dev container lifecycle."
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "terraform-provider-cvp contributors" }]
+# Pinned exactly so `uv run` (with uv.lock ignored) resolves the same podman-py
+# as the dev image (PODMAN_PY_VERSION), keeping the ty gate reproducible.
+dependencies = ["podman==5.7.0"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+# Aggressive set: pyflakes (F), pycodestyle (E,W), isort (I), bugbear (B),
+# comprehensions (C4), pep8-naming (N), pyupgrade (UP), pylint (PL),
+# eradicate (ERA), simplify (SIM), pathlib (PTH), security (S), returns (RET),
+# unused-args (ARG), ruff-specific (RUF).
+select = [
+    "F", "E", "W", "I", "B", "C4", "N", "UP", "PL", "ERA",
+    "SIM", "PTH", "S", "RET", "ARG", "RUF",
+]
+ignore = [
+    "PLR2004",  # "magic" values (id[:12] slice) read fine inline.
+    "PLR0911",  # a subcommand dispatch naturally has one return per command.
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.rules]
+unresolved-import = "error"

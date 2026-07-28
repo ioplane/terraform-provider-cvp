@@ -14,7 +14,7 @@ The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
 
 ## Golden rules
 
-1. **Use the dev container.** No host toolchain. `make up && make shell`.
+1. **Use the dev container.** No host toolchain. `task up && task shell`.
    Everything (Go, Terraform, golangci-lint, tfplugindocs, goreleaser) is baked
    into `golang:1.26-trixie`. See [`docs/development.md`](docs/development.md).
 2. **Latest, pinned.** Always use the newest releases (Go 1.26.5, framework
@@ -72,7 +72,7 @@ export CVP_ENDPOINT="um-cvp01.<lab-domain>:443"
 export CVP_AUTH_METHOD="bearer"
 export CVP_TOKEN="$(gopass show -o <token-leaf>)"
 export TF_ACC=1
-make testacc
+task testacc
 ```
 
 Never point acceptance tests at a production CVP. Namespace all test objects
@@ -88,14 +88,14 @@ local merges to `main`.
    `scripts/worktree.sh new feat/<scope>/<name>` (or
    `sprint/<id>-<scope>` for sprint work). It adds a worktree under
    `../.worktrees/<branch>` cut from `origin/main`.
-2. `cd` into the worktree; develop in the container (`make up && make shell`);
+2. `cd` into the worktree; develop in the container (`task up && task shell`);
    consult `gopls` + `context7` + `arista-mcp`.
-3. Before pushing: `make all` (build + test + lint + tffmt-check + lint-docs +
-   vulncheck). Resource-touching changes: also `make verify` (live acceptance),
+3. Before pushing: `task all` (build + test + lint + tffmt-check + lint-docs +
+   vulncheck). Resource-touching changes: also `task verify` (live acceptance),
    and quote the `N/N acceptance tests pass` line in the commit body.
 4. Update `CHANGELOG.md` `[Unreleased]`.
-5. Regenerate registry docs (`make docs`) if the schema changed; regenerate
-   stubs (`make proto`) if protos changed.
+5. Regenerate registry docs (`task docs`) if the schema changed; regenerate
+   stubs (`task proto`) if protos changed.
 6. Commit per Conventional Commits; push the branch; **open a Pull Request**
    whose title is a Conventional Commit subject (CI validates it). One
    code-owner approval + green required checks, then **squash-merge**.
@@ -105,19 +105,21 @@ local merges to `main`.
 > `main` enforces PR-only + code-owner review + required checks — see
 > `GOVERNANCE.md`.
 
-## Quality gates (a PR may not merge with an `error`-tier finding)
+## Quality gates (zero-findings — any unresolved lint finding blocks a merge)
 
 | Gate | Command |
 |---|---|
-| Build | `make build` |
-| Unit + race | `make test` |
-| Acceptance (live CVP) | `make testacc` |
-| golangci-lint v2 (~90 linters) | `make lint` |
-| Vulnerabilities | `make vulncheck` · `make osv-scan` |
-| Terraform fmt | `make tffmt-check` |
-| Registry docs | `make docs-check` |
-| Docs lint | `make lint-docs` |
-| All-in-one | `make all` (pre-PR) · `make verify` (+ lab) |
+| Build | `task build` |
+| Unit + race | `task test` |
+| Acceptance (live CVP) | `task testacc` |
+| golangci-lint v2 (~90 linters) | `task lint` |
+| Python automation (uv + ruff + ty) | `task lint-py` |
+| SAST (Semgrep) | `task semgrep` |
+| Vulnerabilities | `task vulncheck` · `task osv-scan` |
+| Terraform fmt | `task tffmt-check` |
+| Registry docs | `task docs-check` |
+| Docs lint | `task lint-docs` |
+| All-in-one | `task all` (pre-PR) · `task verify` (+ lab) |
 
 ## Storage policy
 

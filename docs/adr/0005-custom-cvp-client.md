@@ -30,7 +30,7 @@ definitions using **buf**, instead of depending on `cloudvision-go`.
   spell-check, and code review.
 - Hand-written client wrapper (retry, auth, helpers) stays in
   `internal/client/cvp/` and imports `internal/pb`.
-- Make targets: `make proto` (generate), `make proto-lint`, `make proto-breaking`.
+- Task targets: `task proto` (generate), `task proto-lint`, `task proto-breaking`.
 
 ## Consequences
 
@@ -43,7 +43,7 @@ definitions using **buf**, instead of depending on `cloudvision-go`.
 - **Generated noise is contained:** `internal/pb` is machine-owned and hidden
   from review/lint/diff tooling.
 - **Cost:** we own the vendoring + regeneration step. Accepted — it is a
-  mechanical `make proto` and buys us independence from `cloudvision-go`'s
+  mechanical `task proto` and buys us independence from `cloudvision-go`'s
   dependency choices.
 - If Arista later ships a `cloudvision-go` release with a clean `genproto`, this
   decision can be revisited; the `internal/client/cvp` wrapper isolates the

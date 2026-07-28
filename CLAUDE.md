@@ -7,7 +7,7 @@ exactly. This file only highlights the rules most easily missed.
 
 ## Non-negotiables
 
-- **Work in the dev container.** No host toolchain: `make up && make shell`.
+- **Work in the dev container.** No host toolchain: `task up && task shell`.
   Toolchain is defined once in `deployments/containers/Containerfile.dev`
   (`golang:1.26-trixie`).
 - **Latest, pinned versions** for everything (Go 1.26.5, framework v1.19+, gRPC
@@ -17,7 +17,7 @@ exactly. This file only highlights the rules most easily missed.
   on training-data recall. **`gopls`** for code navigation.
 - **`gopass` for all secrets** (lab credentials, signing key). Never commit
   credentials, state, or CVP exports.
-- **Verify before claiming done.** Run `make all` (and `make verify` for
+- **Verify before claiming done.** Run `task all` (and `task verify` for
   resource changes) and quote the evidence. Follow
   [`docs/testing.md`](docs/testing.md).
 

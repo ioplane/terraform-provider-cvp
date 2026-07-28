@@ -1,77 +1,234 @@
 #!/usr/bin/env python3
-"""podman-py automation for terraform-provider-cvp.
+"""Build automation for terraform-provider-cvp via podman-py.
 
-A thin, dependency-light wrapper over the same dev container the Makefile and
-podman-compose stacks drive. Exists so CI or ad-hoc scripts can manage the
-lifecycle without shelling out through Make.
+Drives the dev-image build and container lifecycle through the Podman REST
+socket (not shelling out to the CLI), so CI and ad-hoc scripts can manage the
+same container the Taskfile and podman-compose stacks use.
 
-Docs:
-  - podman-py: https://github.com/containers/podman-py
-  - Compose Specification: https://github.com/compose-spec/compose-spec
+Spec references:
+  - Containerfile.5  https://github.com/containers/common/blob/main/docs/Containerfile.5.md
+  - Compose Spec     https://github.com/compose-spec/compose-spec/blob/main/spec.md
+  - containers.conf  https://github.com/containers/common/blob/main/docs/containers.conf.5.md
+  - podman-py        https://github.com/containers/podman-py
+
+Requires:
+  - python >= 3.11
+  - podman-py >= 5.7
 
 Usage:
-  scripts/automation/build.py up                 # build image + start dev container
-  scripts/automation/build.py exec -- go test ./...
-  scripts/automation/build.py down
-  scripts/automation/build.py versions
+  scripts/automation/build.py dev-image      Build the development image.
+  scripts/automation/build.py up             Start the dev container.
+  scripts/automation/build.py down           Stop and remove the dev container.
+  scripts/automation/build.py exec -- <cmd>  Run <cmd> inside the dev container.
+  scripts/automation/build.py lint           Run all lint targets in one shot.
+  scripts/automation/build.py versions       Print the toolchain versions.
 """
 
 from __future__ import annotations
 
 import argparse
-import subprocess
+import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    from podman import PodmanClient
+    from podman.errors import APIError, NotFound
+except ImportError as exc:  # pragma: no cover
+    print(f"podman-py not installed: {exc}", file=sys.stderr)
+    sys.exit(2)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-COMPOSE_FILE = REPO_ROOT / "deployments" / "compose" / "compose.dev.yml"
-SERVICE = "dev"
+DEV_IMAGE = "localhost/terraform-provider-cvp-dev:local"
+DEV_CONTAINER = "terraform-provider-cvp-dev"
+DEV_CONTAINERFILE = REPO_ROOT / "deployments" / "containers" / "Containerfile.dev"
+
+_DEV_ENVIRONMENT = {
+    "GOFLAGS": "-buildvcs=false",
+    "GOCACHE": "/tmp/go-cache",  # noqa: S108 — container path, matches compose.dev.yml
+    "GOMODCACHE": "/go/pkg/mod",
+    "CHECKPOINT_DISABLE": "1",
+    "TF_IN_AUTOMATION": "1",
+}
+
+# Lab credentials the caller may export at any time; forwarded into every exec
+# so acceptance runs authenticate even against a container started earlier.
+_LAB_ENV_VARS = ("CVP_ENDPOINT", "CVP_AUTH_METHOD", "CVP_TOKEN", "TF_ACC")
 
 
-def compose(*args: str) -> int:
-    """Run podman-compose against the dev stack."""
-    cmd = ["podman-compose", "-f", str(COMPOSE_FILE), *args]
-    return subprocess.call(cmd)
+def _lab_environment() -> dict[str, str]:
+    return {var: value for var in _LAB_ENV_VARS if (value := os.environ.get(var))}
 
 
-def cmd_up(_: argparse.Namespace) -> int:
-    return compose("up", "-d", "--build")
+@dataclass(frozen=True, slots=True)
+class Settings:
+    """Runtime configuration derived from the environment."""
+
+    socket_uri: str
+
+    @classmethod
+    def from_env(cls) -> Settings:
+        sock = os.environ.get("CONTAINER_HOST") or os.environ.get("PODMAN_SOCKET")
+        if not sock:
+            uid = os.geteuid()
+            sock = f"unix:///run/user/{uid}/podman/podman.sock" if uid else "unix:///run/podman/podman.sock"
+        return cls(socket_uri=sock)
 
 
-def cmd_down(_: argparse.Namespace) -> int:
-    return compose("down")
+def client(settings: Settings) -> PodmanClient:
+    return PodmanClient(base_url=settings.socket_uri)
 
 
-def cmd_exec(ns: argparse.Namespace) -> int:
-    if not ns.command:
-        print("error: nothing to exec; pass a command after --", file=sys.stderr)
+# --- commands ---------------------------------------------------------------
+
+
+def cmd_dev_image(settings: Settings) -> int:
+    with client(settings) as podman:
+        print(f"build: {DEV_CONTAINERFILE} -> {DEV_IMAGE}")
+        try:
+            _, stream = podman.images.build(
+                path=str(REPO_ROOT),
+                dockerfile=str(DEV_CONTAINERFILE.relative_to(REPO_ROOT)),
+                tag=DEV_IMAGE,
+                rm=True,
+                forcerm=True,
+            )
+        except APIError as exc:
+            print(f"podman build failed: {exc}", file=sys.stderr)
+            return 1
+        for chunk in stream:
+            msg = chunk.get("stream") or chunk.get("error") or "" if isinstance(chunk, dict) else str(chunk)
+            if msg:
+                sys.stdout.write(msg)
+        return 0
+
+
+def cmd_up(settings: Settings) -> int:
+    with client(settings) as podman:
+        try:
+            existing = podman.containers.get(DEV_CONTAINER)
+        except NotFound:
+            existing = None
+        if existing is not None:
+            if existing.status != "running":
+                existing.start()
+            print(f"{DEV_CONTAINER} running")
+            return 0
+
+        if not podman.images.exists(DEV_IMAGE):
+            rc = cmd_dev_image(settings)
+            if rc:
+                return rc
+
+        container = podman.containers.create(
+            image=DEV_IMAGE,
+            name=DEV_CONTAINER,
+            command=["sleep", "infinity"],
+            working_dir="/app",
+            mounts=[{"type": "bind", "source": str(REPO_ROOT), "target": "/app", "read_only": False}],
+            environment=dict(_DEV_ENVIRONMENT),
+            cap_drop=["ALL"],
+            # label=disable matches compose.dev.yml so the bind mount is usable
+            # on SELinux-enforcing hosts (Fedora/RHEL family).
+            security_opt=["label=disable", "no-new-privileges:true"],
+            restart_policy={"Name": "unless-stopped"},
+        )
+        container.start()
+        print(f"{DEV_CONTAINER} started ({container.id[:12]})")
+        return 0
+
+
+def cmd_down(settings: Settings) -> int:
+    with client(settings) as podman:
+        try:
+            container = podman.containers.get(DEV_CONTAINER)
+        except NotFound:
+            print(f"{DEV_CONTAINER}: not present")
+            return 0
+        container.stop()
+        container.remove(force=True)
+        print(f"{DEV_CONTAINER}: stopped and removed")
+        return 0
+
+
+def cmd_exec(settings: Settings, command: list[str]) -> int:
+    if not command:
+        print("usage: build.py exec -- <command...>", file=sys.stderr)
         return 2
-    return compose("exec", "-T", SERVICE, *ns.command)
+    with client(settings) as podman:
+        try:
+            container = podman.containers.get(DEV_CONTAINER)
+        except NotFound:
+            print(f"{DEV_CONTAINER} not running; run `build.py up` first", file=sys.stderr)
+            return 1
+        rc, output = container.exec_run(cmd=command, demux=False, tty=True, environment=_lab_environment())
+        if isinstance(output, (bytes, bytearray)):
+            sys.stdout.buffer.write(output)
+        elif isinstance(output, str):
+            sys.stdout.write(output)
+        return int(rc or 0)
 
 
-def cmd_versions(_: argparse.Namespace) -> int:
-    script = (
-        "go version && terraform version | head -1 && "
-        "golangci-lint version --short && tfplugindocs --version 2>/dev/null || true"
+def cmd_lint(settings: Settings) -> int:
+    targets = [
+        ["golangci-lint", "run", "./..."],
+        ["markdownlint-cli2", "**/*.md"],
+        ["yamllint", "-c", ".yamllint.yaml", "."],
+        ["cspell", "--no-progress", "--no-summary", "--config", ".cspell.json", "**/*.md", "**/*.go"],
+        ["govulncheck", "./..."],
+    ]
+    rc = 0
+    for cmd in targets:
+        print(f">>> {' '.join(cmd)}")
+        rc = max(rc, cmd_exec(settings, cmd))
+    return rc
+
+
+def cmd_versions(settings: Settings) -> int:
+    return cmd_exec(
+        settings,
+        ["bash", "-lc", "go version && terraform version | head -1 && golangci-lint version --short"],
     )
-    return compose("exec", "-T", SERVICE, "bash", "-lc", script)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+# --- entry point ------------------------------------------------------------
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="build.py", add_help=True)
     sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("dev-image", help="Build the development image.")
+    sub.add_parser("up", help="Start the development container.")
+    sub.add_parser("down", help="Stop and remove the development container.")
+    p_exec = sub.add_parser("exec", help="Run a command inside the dev container.")
+    p_exec.add_argument("command", nargs=argparse.REMAINDER)
+    sub.add_parser("lint", help="Run all linters one after another.")
+    sub.add_parser("versions", help="Print the toolchain versions.")
 
-    sub.add_parser("up", help="build image + start dev container").set_defaults(func=cmd_up)
-    sub.add_parser("down", help="stop + remove dev container").set_defaults(func=cmd_down)
-    sub.add_parser("versions", help="print toolchain versions").set_defaults(func=cmd_versions)
+    args = parser.parse_args(argv)
+    settings = Settings.from_env()
 
-    exec_p = sub.add_parser("exec", help="run a command in the dev container")
-    exec_p.add_argument("command", nargs=argparse.REMAINDER, help="command after --")
-    exec_p.set_defaults(func=cmd_exec)
-
-    ns = parser.parse_args()
-    return ns.func(ns)
+    match args.cmd:
+        case "dev-image":
+            return cmd_dev_image(settings)
+        case "up":
+            return cmd_up(settings)
+        case "down":
+            return cmd_down(settings)
+        case "exec":
+            # Strip only the leading argparse `--`, preserving any separators the
+            # invoked command itself uses (e.g. `exec -- tool -- positional`).
+            command = args.command[1:] if args.command[:1] == ["--"] else args.command
+            return cmd_exec(settings, command)
+        case "lint":
+            return cmd_lint(settings)
+        case "versions":
+            return cmd_versions(settings)
+        case _:  # pragma: no cover
+            parser.error(f"unknown command: {args.cmd}")
+            return 2
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

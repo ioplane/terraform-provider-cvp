@@ -28,6 +28,9 @@ services:
         TERRAGRUNT_VERSION: "1.1.1"
         NODE_MAJOR: "22"
         PODMAN_PY_VERSION: "5.7.0"
+        UV_VERSION: "0.11.33"
+        RUFF_VERSION: "0.16.0"
+        TY_VERSION: "0.0.64"
 
     init: true
     command: ["sleep", "infinity"]
@@ -48,7 +51,7 @@ services:
       TF_IN_AUTOMATION: "1"
       NPM_CONFIG_UPDATE_NOTIFIER: "false"
       # Acceptance-test wiring — populated from gopass by the caller, never
-      # committed. Empty here means `make test` runs unit tests only.
+      # committed. Empty here means `task test` runs unit tests only.
       CVP_ENDPOINT: "${CVP_ENDPOINT:-}"
       CVP_AUTH_METHOD: "${CVP_AUTH_METHOD:-}"
       CVP_TOKEN: "${CVP_TOKEN:-}"

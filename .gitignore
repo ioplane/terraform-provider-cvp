@@ -24,6 +24,11 @@ trivy-results.sarif
 # Node (documentation linters)
 /node_modules/
 
+# Python automation (uv/ruff/ty) — uv.lock IS committed for reproducibility
+**/.venv/
+**/__pycache__/
+*.pyc
+
 # Git worktrees / Serena cache
 /.worktrees/
 /.serena/cache/
@@ -37,6 +42,11 @@ trivy-results.sarif
 **/terraform.tfstate
 **/terraform.tfstate.backup
 **/crash.log
+
+# Secrets / local env — NEVER commit
+.env
+.env.*
+!.env.example
 
 # IDE
 .idea/

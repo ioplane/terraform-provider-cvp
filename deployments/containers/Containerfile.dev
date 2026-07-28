@@ -29,6 +29,9 @@ ARG OPENTOFU_VERSION=1.12.5
 ARG TERRAGRUNT_VERSION=1.1.1
 ARG NODE_MAJOR=22
 ARG PODMAN_PY_VERSION=5.7.0
+ARG UV_VERSION=0.11.33
+ARG RUFF_VERSION=0.16.0
+ARG TY_VERSION=0.0.64
 
 FROM golang:1.26-trixie AS dev
 
@@ -45,6 +48,10 @@ ARG OPENTOFU_VERSION
 ARG TERRAGRUNT_VERSION
 ARG NODE_MAJOR
 ARG PODMAN_PY_VERSION
+ARG UV_VERSION
+ARG RUFF_VERSION
+ARG TY_VERSION
+ARG TASK_VERSION
 
 # TF_ACC is unset by default: acceptance tests only run when the caller opts in
 # with `TF_ACC=1` and provides live CVP endpoint + credentials (see AGENTS.md).
@@ -131,12 +138,26 @@ RUN --mount=type=cache,target=/root/.npm \
         @commitlint/cli@latest \
         @commitlint/config-conventional@latest
 
-# Python tooling: yamllint, junit2html, podman-py for automation parity.
+# Python tooling: yamllint, junit2html, podman-py for automation parity, plus
+# the Astral toolchain (uv + ruff + ty) for linting/type-checking the podman-py
+# automation under scripts/automation (mirrors the pulumi-eos house standard).
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --break-system-packages --no-cache-dir \
         yamllint \
         junit2html \
-        "podman==${PODMAN_PY_VERSION}"
+        "podman==${PODMAN_PY_VERSION}" \
+        "uv==${UV_VERSION}"
+
+# Pre-install pinned ruff + ty so `uv tool run` is offline-deterministic.
+ENV PATH="/root/.local/bin:${PATH}"
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv tool install "ruff==${RUFF_VERSION}" \
+ && uv tool install "ty==${TY_VERSION}"
+
+# Ensure login shells (`task shell`) source the full toolchain PATH — Debian's
+# /etc/profile otherwise resets PATH and hides /go/bin and /root/.local/bin.
+RUN printf 'export PATH="/root/.local/bin:/go/bin:/usr/local/go/bin:$PATH"\n' \
+      > /etc/profile.d/10-toolchain-path.sh
 
 WORKDIR /app
 VOLUME /app

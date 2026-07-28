@@ -1,0 +1,203 @@
+# Taskfile for terraform-provider-cvp — https://taskfile.dev
+#
+# Replaces the Makefile. All Go/Terraform commands run inside the Podman dev
+# container; no host Go toolchain is required. Run on the host with `task <name>`
+# (needs `task` + `podman-compose`). See docs/development.md.
+version: "3"
+
+vars:
+  TYPE: cvp
+  BINARY: terraform-provider-cvp
+  COMPOSE_FILE: deployments/compose/compose.dev.yml
+  DC: podman-compose -f deployments/compose/compose.dev.yml
+  EXEC: podman-compose -f deployments/compose/compose.dev.yml exec -T dev
+  SEMGREP_CONFIG: --config p/golang --config p/terraform --config p/dockerfile --config p/github-actions --config p/secrets
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || cat VERSION 2>/dev/null || echo dev
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo unknown
+  BUILD_DATE:
+    sh: date -u +%Y-%m-%dT%H:%M:%SZ
+  LDFLAGS: >-
+    -s -w
+    -X main.version={{.VERSION}}
+    -X main.commit={{.GIT_COMMIT}}
+    -X main.date={{.BUILD_DATE}}
+
+tasks:
+  default:
+    desc: List available tasks.
+    silent: true
+    cmds:
+      - task --list
+
+  # === Lifecycle ===
+  up:
+    desc: Build the dev image and start the container.
+    cmds: ["{{.DC}} up -d --build"]
+  down:
+    desc: Stop and remove the dev container.
+    cmds: ["{{.DC}} down"]
+  restart:
+    desc: Restart the dev container.
+    cmds: [{ task: down }, { task: up }]
+  logs:
+    desc: Follow the dev container logs.
+    cmds: ["{{.DC}} logs -f dev"]
+  shell:
+    desc: Open a shell inside the dev container.
+    cmds: ["{{.DC}} exec dev bash"]
+
+  # === Build ===
+  build:
+    desc: Build the provider binary into bin/.
+    cmds: ["{{.EXEC}} go build -ldflags='{{.LDFLAGS}}' -o bin/{{.BINARY}} ."]
+  install:
+    desc: go install the provider (for dev_overrides).
+    cmds: ["{{.EXEC}} go install -ldflags='{{.LDFLAGS}}' ."]
+
+  # === Test ===
+  test:
+    desc: Unit tests with the race detector.
+    cmds: ["{{.EXEC}} go test ./... -race -count=1"]
+  test-v:
+    desc: Unit tests, verbose.
+    cmds: ["{{.EXEC}} go test ./... -race -count=1 -v"]
+  test-run:
+    desc: 'Run a single test: task test-run RUN=TestX PKG=./internal/x'
+    preconditions:
+      - sh: test -n "{{.RUN}}"
+        msg: "Usage: task test-run RUN=TestX PKG=./internal/x"
+    cmds: ["{{.EXEC}} go test -run '{{.RUN}}' {{.PKG}} -race -count=1 -v"]
+  testacc:
+    desc: Acceptance tests against the live CVP lab (TF_ACC=1, tag acceptance).
+    cmds:
+      - >-
+        {{.EXEC}} env TF_ACC=1
+        CVP_ENDPOINT="$CVP_ENDPOINT"
+        CVP_AUTH_METHOD="$CVP_AUTH_METHOD"
+        CVP_TOKEN="$CVP_TOKEN"
+        go test -tags acceptance ./... -race -count=1 -timeout 120m -v
+
+  # === Quality ===
+  lint:
+    desc: golangci-lint v2.
+    cmds: ["{{.EXEC}} golangci-lint run ./..."]
+  lint-fix:
+    desc: golangci-lint with autofix.
+    cmds: ["{{.EXEC}} golangci-lint run --fix ./..."]
+  vulncheck:
+    desc: govulncheck.
+    cmds: ["{{.EXEC}} govulncheck ./..."]
+  osv-scan:
+    desc: osv-scanner.
+    cmds: ["{{.EXEC}} osv-scanner scan --recursive ."]
+  gosec:
+    desc: gosec only (via golangci-lint).
+    cmds: ["{{.EXEC}} golangci-lint run --enable-only gosec ./..."]
+  semgrep:
+    desc: SAST with Semgrep (host tool — uses your login for Pro rules; Go/Terraform/Dockerfile/Actions/secrets).
+    cmds:
+      - "semgrep scan {{.SEMGREP_CONFIG}} --metrics=off --disable-version-check --error"
+
+  # === SonarCloud management (Web API; host python + gopass token) ===
+  sonar-status:
+    desc: Show the SonarCloud quality-gate status (token from gopass).
+    cmds:
+      - 'SONAR_MGMT_TOKEN="$(gopass show -o infra4/sonarcloud/management-token)" python3 scripts/automation/sonarcloud.py status'
+  sonar-gate:
+    desc: Show the assigned SonarCloud quality gate.
+    cmds:
+      - 'SONAR_MGMT_TOKEN="$(gopass show -o infra4/sonarcloud/management-token)" python3 scripts/automation/sonarcloud.py gate'
+
+  # === Python automation (podman-py) — uv + ruff + ty ===
+  lint-py:
+    desc: Lint + type-check the podman-py automation (ruff + ty).
+    cmds:
+      - "{{.EXEC}} sh -c 'cd scripts/automation && uv tool run ruff check . && uv tool run ruff format --check . && uv run --locked --with ty==0.0.64 ty check .'"
+  fmt-py:
+    desc: Auto-format + fix the podman-py automation (ruff).
+    cmds:
+      - "{{.EXEC}} sh -c 'cd scripts/automation && uv tool run ruff format . && uv tool run ruff check --fix .'"
+
+  # === Protobuf (custom CVP client, ADR 0005) ===
+  proto:
+    desc: Generate Go gRPC stubs from api/proto into internal/pb.
+    cmds:
+      - '{{.EXEC}} sh -c ''if [ -n "$(find api/proto -name "*.proto" 2>/dev/null)" ]; then buf generate; else echo "proto: no .proto files yet (P1) — skipping"; fi'''
+  proto-lint:
+    desc: buf lint (no-op until protos are vendored).
+    cmds:
+      - '{{.EXEC}} sh -c ''if [ -n "$(find api/proto -name "*.proto" 2>/dev/null)" ]; then buf lint; else echo "proto-lint: no .proto files yet (P1) — skipping"; fi'''
+  proto-breaking:
+    desc: buf breaking-change check against main.
+    cmds:
+      - '{{.EXEC}} sh -c ''if [ -n "$(find api/proto -name "*.proto" 2>/dev/null)" ]; then buf breaking --against ".git#branch=main"; else echo "proto-breaking: no .proto files yet (P1) — skipping"; fi'''
+
+  # === Terraform formatting (examples) ===
+  tffmt:
+    desc: terraform fmt the examples.
+    cmds: ["{{.EXEC}} terraform fmt -recursive examples"]
+  tffmt-check:
+    desc: terraform fmt -check the examples.
+    cmds: ["{{.EXEC}} terraform fmt -check -recursive examples"]
+
+  # === Docs ===
+  docs:
+    desc: Generate Terraform Registry docs (tfplugindocs).
+    cmds: ["{{.EXEC}} tfplugindocs generate --provider-name {{.TYPE}}"]
+  docs-check:
+    desc: Validate Terraform Registry docs.
+    cmds: ["{{.EXEC}} tfplugindocs validate --provider-name {{.TYPE}}"]
+  lint-md:
+    desc: markdownlint.
+    cmds: ['{{.EXEC}} markdownlint-cli2 "**/*.md" "#node_modules" "#bin" "#dist"']
+  lint-yaml:
+    desc: yamllint.
+    cmds: ["{{.EXEC}} yamllint -c .yamllint.yaml ."]
+  lint-spell:
+    desc: cspell.
+    cmds: ['{{.EXEC}} cspell --no-progress --no-summary --config .cspell.json "**/*.md" "**/*.go"']
+  lint-docs:
+    desc: All documentation linters + registry-doc validation.
+    cmds:
+      - task: lint-md
+      - task: lint-yaml
+      - task: lint-spell
+      - task: docs-check
+
+  # === Deps ===
+  tidy:
+    desc: go mod tidy.
+    cmds: ["{{.EXEC}} go mod tidy"]
+  download:
+    desc: go mod download.
+    cmds: ["{{.EXEC}} go mod download"]
+
+  # === Aggregate gates ===
+  all:
+    desc: "Pre-PR gate: build + test + lint + lint-py + tffmt-check + lint-docs + vulncheck."
+    cmds:
+      - task: build
+      - task: test
+      - task: lint
+      - task: lint-py
+      - task: tffmt-check
+      - task: lint-docs
+      - task: vulncheck
+  verify:
+    desc: "Full gate: all + live acceptance tests."
+    cmds:
+      - task: all
+      - task: testacc
+      - cmd: echo "verify — all gates green"
+
+  # === Misc ===
+  clean:
+    desc: Remove build/report artifacts.
+    cmds: ["rm -rf bin/ dist/ reports/ coverage.out coverage.html"]
+  versions:
+    desc: Print the toolchain versions.
+    cmds:
+      - 'echo "task (host):  $(task --version)"'
+      - "{{.EXEC}} sh -c 'go version; terraform version | head -1; tofu version | head -1; terragrunt --version | head -1; golangci-lint version --short; buf --version; uv --version'"
