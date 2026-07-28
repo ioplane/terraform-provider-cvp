@@ -118,6 +118,14 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   approve/start/rollback actions; the read-only `ChangeControlService`
   (GetOne/GetAll/Subscribe) is the state view for computed status (design.md D3,
   ADR 0006).
+- **Source-of-truth guardrails (rules + skill + hook).** Codified
+  "never state a CVP/EOS or library API fact from memory": AGENTS.md gains a
+  prominent source-of-truth section (arista-mcp / **cvprac** / cloudvision-apis
+  protos / arista-cvp-re / context7), CLAUDE.md and CODEX.md echo it, a
+  `cvp-api-lookup` skill encodes the lookup workflow, and a PreToolUse hook
+  (`.claude/`) nudges when a CVP endpoint is hand-rolled without a source.
+  Records the lesson: a guessed enrollment endpoint's 403 was misread as an
+  authorization failure (the current cvprac endpoint works).
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC

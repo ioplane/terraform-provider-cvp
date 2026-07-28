@@ -16,9 +16,15 @@ exactly. This file only highlights the rules most easily missed.
   (`golang:1.26-trixie`).
 - **Latest, pinned versions** for everything (Go 1.26.5, framework v1.19+, gRPC
   v1.82+, golangci-lint v2.12.2, latest SHA-pinned Actions).
-- **`arista-mcp` MCP is mandatory** before stating any Arista CVP/EOS fact in
-  code or docs. Cite it. **`context7` MCP** for library/API docs — do not rely
-  on training-data recall. **`gopls`** for code navigation.
+- **Source of truth — never from memory.** Before stating or building on any
+  CVP/EOS or library API fact (endpoint, RPC/field, TerminAttr flag, EOS CLI,
+  port, auth/RBAC), verify it against a source: **`arista-mcp` MCP** (CVP/EOS
+  behavior, mandatory + cite), **`cvprac`** (`../cvprac/cvprac/cvp_api.py` — the
+  current CVP REST endpoint/body), the **cloudvision-apis proto** (gRPC fields),
+  **`arista-cvp-re`** (auth/RBAC internals), **`context7` MCP** (other libs).
+  Never trust training-data recall — a guessed endpoint's 4xx is not evidence
+  about permissions. See the `cvp-api-lookup` skill,
+  `~/.claude/rules/cvp-eos-sources.md`, and AGENTS.md. **`gopls`** for code nav.
 - **`gopass` for all secrets** (lab credentials, signing key). Never commit
   credentials, state, or CVP exports.
 - **Verify before claiming done.** Run `task all` (and `task verify` for

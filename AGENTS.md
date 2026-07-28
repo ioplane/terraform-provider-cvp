@@ -54,9 +54,38 @@ The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
 | Tool | Why |
 |---|---|
 | **`gopls` LSP** | Navigate/rename/find-references and read live diagnostics instead of grepping. |
-| **`context7` MCP** | Fetch current docs for the Plugin Framework, gRPC, any library — before writing code against it. Do not trust training-data API recall. |
+| **`context7` MCP** | Fetch current docs for the Plugin Framework, gRPC, any library/CLI — before writing code against it. Do not trust training-data API recall. |
 | **`arista-mcp` MCP** | Authoritative Arista CVP/EOS facts. Mandatory for any CVP-behaviour claim. |
 | **`gopass`** | The only source of lab credentials and the release signing key. |
+
+### Source of truth — never from memory
+
+Every **CVP/EOS or library API fact** — a REST endpoint, gRPC service/RPC,
+message field, TerminAttr flag, EOS CLI, port, auth model, RBAC behavior,
+version-gated behavior — MUST be verified against an authoritative source
+**before** you state it or build a request/command around it. Training-data
+recall is a hypothesis to confirm, never an answer. This is non-negotiable
+(global rule: `~/.claude/rules/cvp-eos-sources.md`; skill: `cvp-api-lookup`).
+
+Authoritative sources, in order:
+
+1. **`arista-mcp` MCP** — CVP/EOS behavior, TOIs, features. Cite it.
+2. **`cvprac`** (`aristanetworks/cvprac`, vendored at `../cvprac`) — read the
+   matching method in `cvprac/cvp_api.py` for the **current** CVP REST endpoint,
+   body, and `apiversion`-gated variants. The fastest reliable endpoint source.
+3. **`cloudvision-apis` protos** (`api/proto/` or the pinned upstream) — for
+   gRPC service/RPC/message field shapes. Read the proto; do not guess fields.
+4. **`arista-cvp-re`** (`../arista-cvp-re/docs`) — reverse-engineered CVP
+   internals (auth/`ext_authz`/`certhdr`, ingest endpoints, RBAC, onboarding
+   tokens) to understand _why_ an API behaves as it does.
+5. **`context7` MCP** — any other library/SDK/CLI (framework, Proxmox, …).
+6. **Live `um-cvp`** — confirm read-only via `cvprac` when docs are ambiguous.
+
+> **Lesson (do not repeat):** a CVP enrollment endpoint was guessed from memory
+> (`/cvpservice/enroll/createEnrollmentToken.do`) and its 403 was misread as
+> "account unauthorized". The current endpoint is
+> `/api/resources/admin.Enrollment/AddEnrollmentToken` (cvprac,
+> `create_enroll_token`) and the account was authorized. **Check cvprac first.**
 
 ## The lab (netlab2 CVP)
 
