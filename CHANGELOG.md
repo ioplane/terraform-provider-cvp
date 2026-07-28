@@ -118,6 +118,16 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   approve/start/rollback actions; the read-only `ChangeControlService`
   (GetOne/GetAll/Subscribe) is the state view for computed status (design.md D3,
   ADR 0006).
+- **Change-control design frozen ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)).**
+  `cvp_change_control` will be a **data source** (computed `status`, `error`,
+  `device_ids`) plus **approve / start Actions** (`ApproveConfigService.Set`
+  version-pinned; `ChangeControlConfigService.Set` start flag) — not a mutating
+  resource with `auto_approve` / `wait_for_execution`, upholding the
+  separation-of-duties non-goal (symmetric with ADR 0006). Supersedes the v0.1
+  `cvp_change_control` resource stub and `design.md` D3. Implementation is
+  evidence-gated: a live probe found **0 change controls** on the lab (they are
+  created by submitting a workspace with real device changes), so live
+  acceptance needs a safe fixture first.
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC

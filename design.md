@@ -54,6 +54,12 @@ resolution to last-approved wins) interacts badly with parallel resources.
 
 ### D3 — Change-control status as a computed attribute
 
+> **Superseded by [ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md).**
+> Change control is now a **data source** (computed status) plus **approve /
+> start Actions** — not a mutating resource with `auto_approve` /
+> `wait_for_execution`. `wait_for_execution` becomes a `check` block / poll on
+> the data source (backlog §1). The status model below still holds.
+
 `cvp_change_control.status` is computed only:
 
 ```mermaid
@@ -134,8 +140,11 @@ Implementation: `google.golang.org/grpc` retry middleware.
 - `cvp_studio_inputs` **done** — CRUD + import + D1 prefix-overlap guard, live
   acceptance green.
 - `provider::cvp::studio_path` function **done** — generic path builder.
-- Remaining: `cvp_change_control` (+ its Actions). Compatibility contract in
-  [`docs/compatibility.md`](docs/compatibility.md).
+- `cvp_change_control` **design frozen** ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)):
+  a data source (computed status) + `approve` / `start` Actions. Implementation
+  is **evidence-gated** — live acceptance needs a safe change-control fixture (a
+  submitted workspace with a benign device change); the lab currently has none.
+- Compatibility contract in [`docs/compatibility.md`](docs/compatibility.md).
 - One acceptance test per resource (against the um-cvp lab); documented
   breaking-change probability.
 
