@@ -127,6 +127,9 @@ jobs:
         shell: bash
         run: |
           export PATH="$(go env GOPATH)/bin:$PATH"
+          # Container job: the checkout is owned by a different uid, so git
+          # refuses without an explicit safe.directory.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           if [ -z "$(find api/proto -name '*.proto' 2>/dev/null | head -1)" ]; then
             echo "no .proto files yet (P1) — skipping"; exit 0
           fi

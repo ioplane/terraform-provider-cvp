@@ -14,4 +14,6 @@ These files are excluded from linters, spell-check, and code review
 (`golangci-lint generated: strict`, `.gitattributes linguist-generated`,
 cspell/markdownlint ignores). See [ADR 0005](../../docs/adr/0005-custom-cvp-client.md).
 
-> **Status:** empty at v0.1 — generated in the first P1 gRPC-wiring commit.
+> **Status:** generated for `arista.workspace.v1` (+ transitive `fmp`,
+> `configstatus.v1`, `imagestatus.v1`, `subscriptions`, `time`). Regenerate with
+> `task proto`; the output is deterministic (pinned buf plugins).
