@@ -10,6 +10,8 @@
     "reports/**",
     ".worktrees/**",
     ".serena/**",
+    ".agents/**",
+    ".claude/**",
     "internal/pb/**/*.go",
     "go.sum",
     "**/*.lock.hcl"
@@ -144,7 +146,9 @@
     "SonarQube",
     "SonarCloud",
     "Sonar",
-    "Qube"
+    "Qube",
+    "shieldcn",
+    "shadcn"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

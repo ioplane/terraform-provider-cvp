@@ -23,3 +23,5 @@ ignores:
   - reports
   - .worktrees
   - .serena
+  - .agents
+  - .claude
