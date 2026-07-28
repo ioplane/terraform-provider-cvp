@@ -1,0 +1,54 @@
+extends:
+  - "@commitlint/config-conventional"
+
+# Conventional Commits 1.0.0 — https://www.conventionalcommits.org/en/v1.0.0/
+rules:
+  type-enum:
+    - 2
+    - always
+    - - feat
+      - fix
+      - chore
+      - docs
+      - build
+      - ci
+      - refactor
+      - perf
+      - test
+      - style
+      - revert
+  scope-enum:
+    - 2
+    - always
+    - - provider      # provider config, schema, Configure, client factory
+      - workspace     # cvp_workspace resource
+      - studio        # cvp_studio / cvp_studio_inputs resources
+      - configlet     # cvp_configlet* resources
+      - changecontrol # cvp_change_control resource
+      - tag           # cvp_tag* resources
+      - device        # cvp_device / inventory resources
+      - aaa           # service accounts, tokens, identity providers
+      - client        # internal/client/cvp gRPC wrapper
+      - auth          # authentication methods (cert / session / bearer)
+      - docs          # documentation
+      - examples      # examples/ HCL + Terragrunt
+      - ci            # GitHub Actions / workflows
+      - build         # Containerfile / Makefile / compose
+      - deps          # dependency bumps
+      - release       # release plumbing
+      - test          # tests / acceptance harness
+      - lint          # linter config
+      - repo          # repo hygiene, governance, standards
+  subject-case:
+    - 2
+    - always
+    - - sentence-case
+      - lower-case
+  header-max-length:
+    - 2
+    - always
+    - 100
+  body-max-line-length:
+    - 1
+    - always
+    - 120

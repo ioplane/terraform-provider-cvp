@@ -1,8 +1,8 @@
 // Package workspace implements the `cvp_workspace` resource.
 //
-// Backs `arista.workspace.v1.WorkspaceConfigService`. Один resource =
-// один workspace в CVP; создание = CreateWorkspace RPC; удаление =
-// AbandonWorkspace. Submit/build/approve — отдельные resources в v0.2+.
+// Backs `arista.workspace.v1.WorkspaceConfigService`. One resource = one
+// workspace in CVP; create = CreateWorkspace RPC; delete = AbandonWorkspace.
+// Submit/build/approve become separate resources in v0.2+.
 package workspace
 
 import (
@@ -19,7 +19,7 @@ import (
 var _ resource.Resource = &workspaceResource{}
 
 type workspaceResource struct {
-	// clients набор для workspace.v1 gRPC
+	// client bundle for workspace.v1 gRPC (wired in P1).
 }
 
 func NewResource() resource.Resource { return &workspaceResource{} }
@@ -41,7 +41,7 @@ func (r *workspaceResource) Metadata(ctx context.Context, req resource.MetadataR
 func (r *workspaceResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: `CVP workspace — atomic mutation scope.
-См. docs/notes/2026-07-16-i2-studios-reverse.md, section 7.`,
+See docs/notes/2026-07-16-i2-studios-reverse.md, section 7.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -56,7 +56,7 @@ func (r *workspaceResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Description shown в CVP UI.",
+				MarkdownDescription: "Description shown in the CVP UI.",
 			},
 			"auto_build": schema.BoolAttribute{
 				Optional: true, Computed: true,
@@ -64,12 +64,12 @@ func (r *workspaceResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"auto_submit": schema.BoolAttribute{
 				Optional: true, Computed: true,
-				MarkdownDescription: "Auto-submit после successful build. Default false.",
+				MarkdownDescription: "Auto-submit after a successful build. Default false.",
 			},
 			"auto_approve": schema.BoolAttribute{
 				Optional: true, Computed: true,
-				MarkdownDescription: "Auto-approve после submit — **breaks separation of duties**. " +
-					"Set only для test env.",
+				MarkdownDescription: "Auto-approve after submit — **breaks separation of duties**. " +
+					"Set only for test environments.",
 			},
 		},
 	}
@@ -128,8 +128,9 @@ func (r *workspaceResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	// TODO(P1): call workspace.v1.WorkspaceConfigService.Set с request=REQUEST_ABANDON
-	// Не удаляет workspace physically (workspaces immutable в CVP); маркирует ABANDONED.
+	// TODO(P1): call workspace.v1.WorkspaceConfigService.Set with request=REQUEST_ABANDON.
+	// Does not delete the workspace physically (workspaces are immutable in CVP);
+	// it marks the workspace ABANDONED.
 
 	resp.Diagnostics.AddError("not implemented", "workspace.Delete — pending.")
 }

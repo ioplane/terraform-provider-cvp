@@ -1,0 +1,22 @@
+# Normalize line endings.
+* text=auto eol=lf
+
+*.go   text diff=golang
+*.tf   text
+*.md   text
+*.yml  text
+*.yaml text
+
+# Generated docs — collapse in diffs / mark as generated on GitHub.
+docs/**  linguist-generated=false
+CHANGELOG.md merge=union
+
+# Generated gRPC stubs (buf, ADR 0005) — collapse in diffs, mark generated.
+internal/pb/** linguist-generated=true
+*.pb.go linguist-generated=true
+
+# Binary artifacts (should never be committed, but be explicit).
+*.png binary
+*.jpg binary
+*.gz  binary
+*.zip binary

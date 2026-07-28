@@ -1,0 +1,65 @@
+# compose.lint.yml — one-shot lint runners using the dev image.
+# Compose Specification compliant.
+#
+# Run a single profile:
+#   podman-compose -f deployments/compose/compose.lint.yml --profile lint up --abort-on-container-exit
+
+name: terraform-provider-cvp-lint
+
+services:
+  golangci-lint:
+    image: localhost/terraform-provider-cvp-dev:local
+    profiles: ["lint"]
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+    command: ["golangci-lint", "run", "./..."]
+
+  markdownlint:
+    image: localhost/terraform-provider-cvp-dev:local
+    profiles: ["lint"]
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+    command: ["markdownlint-cli2", "**/*.md"]
+
+  yamllint:
+    image: localhost/terraform-provider-cvp-dev:local
+    profiles: ["lint"]
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+    command: ["yamllint", "-c", ".yamllint.yaml", "."]
+
+  cspell:
+    image: localhost/terraform-provider-cvp-dev:local
+    profiles: ["lint"]
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+    command:
+      - "cspell"
+      - "--no-progress"
+      - "--no-summary"
+      - "--config"
+      - ".cspell.json"
+      - "**/*.md"
+      - "**/*.go"
+
+  vulncheck:
+    image: localhost/terraform-provider-cvp-dev:local
+    profiles: ["lint"]
+    working_dir: /app
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+    command: ["govulncheck", "./..."]

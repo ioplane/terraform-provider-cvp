@@ -1,14 +1,13 @@
-// Package studio_inputs implements `cvp_studio_inputs` — per-workspace input values
-// для Studio path.
+// Package studio_inputs implements `cvp_studio_inputs` — per-workspace input
+// values at a Studio path.
 //
-// **Key semantic**: I2 finding — Set at higher path OVERWRITES lower paths.
-// Provider deteкт prefix overlap at plan time и fails early.
+// **Key semantic**: I2 finding — Set at a higher path OVERWRITES lower paths.
+// The provider detects prefix overlap at plan time and fails early.
 package studio_inputs
 
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -37,8 +36,8 @@ func (r *studioInputsResource) Metadata(ctx context.Context, req resource.Metada
 func (r *studioInputsResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: `Studio input values at a specific path.
-Path semantics per I2 note (bracket notation supported для keyed collections + resolvers).
-См. docs/notes/2026-07-16-i2-studios-reverse.md §1.3.`,
+Path semantics per I2 note (bracket notation supported for keyed collections + resolvers).
+See docs/notes/2026-07-16-i2-studios-reverse.md §1.3.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -46,26 +45,26 @@ Path semantics per I2 note (bracket notation supported для keyed collections 
 			},
 			"workspace_id": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "workspace_id из `cvp_workspace`.",
+				MarkdownDescription: "workspace_id from `cvp_workspace`.",
 			},
 			"studio_id": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "UUID of Studio. Immutable studios (from_package non-empty) не поддерживаются.",
+				MarkdownDescription: "UUID of the Studio. Immutable studios (from_package non-empty) are not supported.",
 			},
 			"path": schema.ListAttribute{
 				Required:            true,
 				ElementType:         types.StringType,
-				MarkdownDescription: "Path segments. См. bracket notation для keyed collections и resolvers.",
+				MarkdownDescription: "Path segments. Bracket notation is supported for keyed collections and resolvers.",
 			},
 			"inputs_json": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "JSON-encoded value at `path`. Provider **не** валидирует против schema — build catch'нёт errors.",
+				MarkdownDescription: "JSON-encoded value at `path`. The provider does **not** validate against the Studio schema — the build catches those errors.",
 			},
 		},
 	}
 }
 
-// ValidateConfig ловит недействительный JSON и predictable path traps на pre-plan.
+// ValidateConfig catches invalid JSON and predictable path traps at pre-plan.
 func (r *studioInputsResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var cfg studioInputsModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
@@ -108,14 +107,11 @@ func (r *studioInputsResource) Read(ctx context.Context, req resource.ReadReques
 }
 
 func (r *studioInputsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// In-place update — Set с same key, new inputs_json.
+	// In-place update — Set with the same key and new inputs_json.
 	resp.Diagnostics.AddError("not implemented", "studio_inputs.Update — pending.")
 }
 
 func (r *studioInputsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Set с remove=true при workspace merge → удалит; иначе — no-op в CVP.
+	// Set with remove=true on workspace merge → deletes; otherwise a no-op in CVP.
 	resp.Diagnostics.AddError("not implemented", "studio_inputs.Delete — pending.")
 }
-
-// pathJoin — helper для composite ID.
-func pathJoin(segments []string) string { return strings.Join(segments, "/") }

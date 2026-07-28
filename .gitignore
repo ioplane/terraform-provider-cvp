@@ -10,8 +10,26 @@
 /dist/
 /bin/
 
+# Coverage / test reports
+/reports/
+coverage.out
+coverage.html
+*.spdx.json
+gosec.sarif
+trivy-results.sarif
+
 # Vendor / module cache (kept via go.sum)
 /vendor/
+
+# Node (documentation linters)
+/node_modules/
+
+# Git worktrees / Serena cache
+/.worktrees/
+/.serena/cache/
+
+# Terragrunt cache
+**/.terragrunt-cache/
 
 # Terraform state / cache (in examples/)
 **/.terraform/
