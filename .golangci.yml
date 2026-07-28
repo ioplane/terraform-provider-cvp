@@ -3,7 +3,10 @@
 #
 # Philosophy (matches the house standard in the sibling pulumi-eos):
 #   * `default: none` — an explicit allowlist gives an auditable surface.
-#   * Severity-tiered — a curated set is `error` (blocks merge); the rest warn.
+#   * Severity-tiered — a curated set is labelled `error`, the rest `warning`.
+#     Note: `golangci-lint run` exits non-zero on ANY finding, so the gate is
+#     effectively zero-findings; the tiers classify findings for triage, not
+#     the exit code.
 #   * Adapted for the Terraform Plugin Framework: schema/CRUD methods are long
 #     and pointer-receiver heavy by design, so the length linters are relaxed
 #     on those specific method bodies rather than disabled globally.
