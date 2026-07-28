@@ -11,6 +11,7 @@ vars:
   COMPOSE_FILE: deployments/compose/compose.dev.yml
   DC: podman-compose -f deployments/compose/compose.dev.yml
   EXEC: podman-compose -f deployments/compose/compose.dev.yml exec -T dev
+  SEMGREP_CONFIG: --config p/golang --config p/terraform --config p/dockerfile --config p/github-actions --config p/secrets
   VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || cat VERSION 2>/dev/null || echo dev
   GIT_COMMIT:
@@ -94,6 +95,10 @@ tasks:
   gosec:
     desc: gosec only (via golangci-lint).
     cmds: ["{{.EXEC}} golangci-lint run --enable-only gosec ./..."]
+  semgrep:
+    desc: SAST with Semgrep (host tool; Go + Terraform + Dockerfile + Actions + secrets).
+    cmds:
+      - "semgrep scan {{.SEMGREP_CONFIG}} --metrics=off --disable-version-check --error"
 
   # === Python automation (podman-py) — uv + ruff + ty ===
   lint-py:

@@ -114,6 +114,7 @@ local merges to `main`.
 | Acceptance (live CVP) | `task testacc` |
 | golangci-lint v2 (~90 linters) | `task lint` |
 | Python automation (uv + ruff + ty) | `task lint-py` |
+| SAST (Semgrep) | `task semgrep` |
 | Vulnerabilities | `task vulncheck` · `task osv-scan` |
 | Terraform fmt | `task tffmt-check` |
 | Registry docs | `task docs-check` |

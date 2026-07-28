@@ -71,6 +71,7 @@ export CONTAINERS_REGISTRIES_CONF=$(pwd)/deployments/containers/registries.conf
 | Lint Python automation (ruff + ty) | `task lint-py` (auto-fix: `task fmt-py`) |
 | Format examples | `task tffmt` / `task tffmt-check` |
 | Vulnerabilities | `task vulncheck` · `task osv-scan` |
+| SAST (Semgrep, host tool) | `task semgrep` |
 | Registry docs | `task docs` / `task docs-check` |
 | Lint docs | `task lint-docs` |
 | Pre-PR gate (no live CVP) | `task all` |

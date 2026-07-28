@@ -26,7 +26,8 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   - `Taskfile.yml` (container-driven), `.goreleaser.yml` v2 (GPG-signed
     `SHA256SUMS` + SPDX SBOM per the Terraform Registry contract), and
     SHA-pinned GitHub Actions workflows (CI, release, security, Scorecard,
-    dependency-review) plus Dependabot.
+    dependency-review) plus Dependabot; SAST via **Semgrep** (`task semgrep` +
+    a CI job scanning Go/Terraform/Dockerfile/Actions/secrets, SARIF-reported).
   - Governance: `AGENTS.md` (+ `CODEX.md` / `CLAUDE.md` pointers), Apache-2.0
     `LICENSE`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`,
     `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates, `VERSION`, and this
@@ -78,6 +79,8 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   avoid a false positive on Google's compound-licensed Go modules.
 - Clarified that the golangci-lint gate is zero-findings (any finding fails the
   run); the severity tiers classify findings, not the exit code (review finding).
+- Pinned `MinVersion: tls.VersionTLS13` on the `insecure_tls` credentials path
+  too (Semgrep `missing-ssl-minversion`).
 
 ## [0.1.0] — 2026-07-16
 
