@@ -100,6 +100,16 @@ tasks:
     cmds:
       - "semgrep scan {{.SEMGREP_CONFIG}} --metrics=off --disable-version-check --error"
 
+  # === SonarCloud management (Web API; host python + gopass token) ===
+  sonar-status:
+    desc: Show the SonarCloud quality-gate status (token from gopass).
+    cmds:
+      - 'SONAR_MGMT_TOKEN="$(gopass show -o infra4/sonarcloud/management-token)" python3 scripts/automation/sonarcloud.py status'
+  sonar-gate:
+    desc: Show the assigned SonarCloud quality gate.
+    cmds:
+      - 'SONAR_MGMT_TOKEN="$(gopass show -o infra4/sonarcloud/management-token)" python3 scripts/automation/sonarcloud.py gate'
+
   # === Python automation (podman-py) — uv + ruff + ty ===
   lint-py:
     desc: Lint + type-check the podman-py automation (ruff + ty).

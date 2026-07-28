@@ -25,6 +25,17 @@ OSS-only coverage. In CI, a `semgrep ci` job uses the `SEMGREP_APP_TOKEN`
 repository secret for Pro rules. Copy [`.env.example`](../.env.example) to `.env`
 (git-ignored) for local token variables.
 
+## SonarCloud
+
+Static analysis runs in CI via the SonarQube job (`SONAR_TOKEN` secret;
+`sonar-project.properties`). SonarCloud has no management CLI, so project
+administration goes through the Web API — see
+[`scripts/automation/sonarcloud.py`](../scripts/automation/sonarcloud.py), driven
+by `task sonar-status` / `task sonar-gate`. It uses a **personal management
+token** stored in gopass at `infra4/sonarcloud/management-token` (not the CI
+`SONAR_TOKEN`). The quality gate reads `NONE` until the `main` branch is analyzed
+once (baseline); that happens on the first merge that runs CI on `main`.
+
 The container (`golang:1.26-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))
 bakes in: Go 1.26.5, golangci-lint v2.12.2, govulncheck, osv-scanner, gotestsum,
