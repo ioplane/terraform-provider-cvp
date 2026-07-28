@@ -3,23 +3,19 @@
 page_title: "cvp_studio_inputs Resource - cvp"
 subcategory: ""
 description: |-
-  Studio input values at a specific path.
-  Path semantics per I2 note (bracket notation supported for keyed collections + resolvers).
-  See docs/notes/2026-07-16-i2-studios-reverse.md §1.3.
+  A declarative inputs value at a Studio path inside a workspace (arista.studio.v1.InputsConfigService). The key {studio_id, workspace_id, path} is immutable; changing any part replaces the resource. CVP validates inputs_json against the studio schema on write.
 ---
 
 # cvp_studio_inputs (Resource)
 
-Studio input values at a specific path.
-Path semantics per I2 note (bracket notation supported for keyed collections + resolvers).
-See docs/notes/2026-07-16-i2-studios-reverse.md §1.3.
+A declarative inputs value at a Studio path inside a workspace (`arista.studio.v1.InputsConfigService`). The key `{studio_id, workspace_id, path}` is immutable; changing any part replaces the resource. CVP validates `inputs_json` against the studio schema on write.
 
 ## Example Usage
 
 ```terraform
 resource "cvp_studio_inputs" "rack3_bgp" {
-  workspace_id = cvp_workspace.bgp_as_bump.id
-  studio_id    = "1dd135ac-e1f3-4dd2-9b57-2bf1dbc3fa86" # EVPN Services with ESI Support
+  workspace_id = cvp_workspace.bgp_as_bump.workspace_id
+  studio_id    = "studio-l3ls" # studio id (slug); an empty path targets the studio root
   path         = ["tenants", "[name=default]", "vrfs", "[name=RED]", "lbBgp"]
 
   inputs_json = jsonencode({
@@ -35,14 +31,14 @@ resource "cvp_studio_inputs" "rack3_bgp" {
 
 ### Required
 
-- `inputs_json` (String) JSON-encoded value at `path`. The provider does **not** validate against the Studio schema — the build catches those errors.
-- `path` (List of String) Path segments. Bracket notation is supported for keyed collections and resolvers.
-- `studio_id` (String) UUID of the Studio. Immutable studios (from_package non-empty) are not supported.
-- `workspace_id` (String) workspace_id from `cvp_workspace`.
+- `inputs_json` (String) JSON-encoded value at `path` (use `jsonencode(...)`). CVP validates it against the studio schema on write; the provider does not.
+- `path` (List of String) Ordered path segments to the input. Empty targets the studio root. Bracket notation is supported for keyed collections and resolvers.
+- `studio_id` (String) Studio id (e.g. `studio-l3ls`). The studio is referenced from mainline.
+- `workspace_id` (String) `workspace_id` from a `cvp_workspace`.
 
 ### Read-Only
 
-- `id` (String) Composite `{workspace_id}:{studio_id}:{path_joined}`.
+- `id` (String) Composite id `{workspace_id}/{studio_id}/{path...}`.
 
 ## Import
 
@@ -51,6 +47,6 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
-# cvp_studio_inputs is imported by its composite id: {workspace_id}:{studio_id}:{path_joined}
-terraform import cvp_studio_inputs.rack3_bgp '8f3c0b2a-...:1dd135ac-...:tenants/[name=default]/vrfs/[name=RED]/lbBgp'
+# cvp_studio_inputs is imported by its composite id: {workspace_id}/{studio_id}/{path...}
+terraform import cvp_studio_inputs.rack3_bgp '8f3c0b2a-1d4e-4a9b-9c11-2bf1dbc3fa86/studio-l3ls/tenants/[name=default]/vrfs/[name=RED]/lbBgp'
 ```

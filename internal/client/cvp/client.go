@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	studiov1 "github.com/ioplane/terraform-provider-cvp/internal/pb/arista/studio.v1"
 	workspacev1 "github.com/ioplane/terraform-provider-cvp/internal/pb/arista/workspace.v1"
 )
 
@@ -109,4 +110,21 @@ func (c *Client) Workspace() workspacev1.WorkspaceServiceClient {
 // workspace, Delete removes it.
 func (c *Client) WorkspaceConfig() workspacev1.WorkspaceConfigServiceClient {
 	return workspacev1.NewWorkspaceConfigServiceClient(c.conn)
+}
+
+// Studios returns the read client for studios (GetOne/GetAll) — used to resolve
+// and validate a studio_id.
+func (c *Client) Studios() studiov1.StudioServiceClient {
+	return studiov1.NewStudioServiceClient(c.conn)
+}
+
+// Inputs returns the read client for studio inputs (the derived state view).
+func (c *Client) Inputs() studiov1.InputsServiceClient {
+	return studiov1.NewInputsServiceClient(c.conn)
+}
+
+// InputsConfig returns the config (mutating) client for studio inputs — Set
+// writes an inputs value at a studio path in a workspace, Delete removes it.
+func (c *Client) InputsConfig() studiov1.InputsConfigServiceClient {
+	return studiov1.NewInputsConfigServiceClient(c.conn)
 }

@@ -23,12 +23,12 @@ change control declaratively over gRPC/TLS, built on the
 </div>
 
 > [!NOTE]
-> **Status: v0.2 in progress.** `cvp_workspace` is fully wired — CRUD, import,
-> and the workflow **Actions** (build / submit / abandon / rebase / rollback /
-> cancel_build), with live acceptance green against the lab. `cvp_studio_inputs`
-> and `cvp_change_control` remain schema-only stubs (`TODO(P1)`). See
-> [`design.md`](design.md) (D9) and [ADR 0006](docs/adr/0006-workspace-resource-and-actions.md)
-> for the workspace design, and [`AGENTS.md`](AGENTS.md) for how to work here.
+> **Status: v0.2 in progress.** `cvp_workspace` (CRUD, import, workflow
+> **Actions**) and `cvp_studio_inputs` (CRUD, import) are fully wired with live
+> acceptance green against the lab. `cvp_change_control` remains a schema-only
+> stub (`TODO(P1)`). See [`design.md`](design.md) (D9) and
+> [ADR 0006](docs/adr/0006-workspace-resource-and-actions.md) for the workspace
+> design, and [`AGENTS.md`](AGENTS.md) for how to work here.
 
 ## Architecture at a glance
 
@@ -55,7 +55,7 @@ flowchart LR
 | Resource | Backing CVP service | State |
 |---|---|---|
 | `cvp_workspace` | `arista.workspace.v1.WorkspaceConfigService` | **full CRUD + import** |
-| `cvp_studio_inputs` | `arista.studio.v1.InputsConfigService` | schema + JSON validation |
+| `cvp_studio_inputs` | `arista.studio.v1.InputsConfigService` | **full CRUD + import** |
 | `cvp_change_control` | `arista.changecontrol.v1.*` | schema only |
 
 ## Actions
