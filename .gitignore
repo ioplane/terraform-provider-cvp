@@ -50,7 +50,14 @@ trivy-results.sarif
 
 # Agent tooling (shieldcn skill etc.)
 .agents/
-.claude/
+# .claude: ignore local/personal state, but VERSION the shareable guardrails
+# (team skills, hooks, and the project hook config).
+.claude/*
+!.claude/settings.json
+!.claude/skills/
+!.claude/hooks/
+!.claude/rules/
+.claude/settings.local.json
 skills-lock.json
 
 # IDE
