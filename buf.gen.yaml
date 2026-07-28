@@ -1,0 +1,29 @@
+# buf code-generation template.
+# Spec: https://buf.build/docs/configuration/v2/buf-gen-yaml
+#
+# Generates Go message + gRPC client stubs into internal/pb. Plugins are pinned
+# so output is reproducible; versions match the dev image ARGs and go.mod.
+#
+# Run:  make proto   (→ buf generate)
+version: v2
+
+managed:
+  enabled: true
+  override:
+    # All generated packages live under our module path.
+    - file_option: go_package_prefix
+      value: github.com/ioplane/terraform-provider-cvp/internal/pb
+
+plugins:
+  - local: protoc-gen-go
+    out: internal/pb
+    opt:
+      - paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: internal/pb
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false
+
+inputs:
+  - directory: api/proto

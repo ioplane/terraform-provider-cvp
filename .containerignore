@@ -1,0 +1,21 @@
+# .containerignore — build-context exclusions for `podman build`.
+# Spec: containerignore.5
+#   https://github.com/containers/common/blob/main/docs/containerignore.5.md
+
+.git
+.worktrees
+.serena
+bin
+dist
+*.test
+*.out
+coverage.out
+coverage.html
+reports
+**/.terraform
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+node_modules
+.idea
+.vscode

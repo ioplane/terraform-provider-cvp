@@ -1,0 +1,81 @@
+# compose.dev.yml — Compose Specification (no top-level version: key).
+# See: https://github.com/compose-spec/compose-spec/blob/main/spec.md
+#
+# Run with: podman-compose -f deployments/compose/compose.dev.yml up -d
+# Shell:    podman-compose -f deployments/compose/compose.dev.yml exec dev bash
+
+name: terraform-provider-cvp
+
+services:
+  dev:
+    container_name: terraform-provider-cvp-dev
+    image: localhost/terraform-provider-cvp-dev:local
+    build:
+      context: ../..
+      dockerfile: deployments/containers/Containerfile.dev
+      args:
+        GO_VERSION: "1.26"
+        GOLANGCI_LINT_VERSION: "v2.12.2"
+        GOVULNCHECK_VERSION: "v1.6.0"
+        OSV_SCANNER_VERSION: "v2.4.0"
+        TFPLUGINDOCS_VERSION: "v0.25.0"
+        GORELEASER_VERSION: "v2.17.1"
+        BUF_VERSION: "v1.72.0"
+        PROTOC_GEN_GO_VERSION: "v1.36.11"
+        PROTOC_GEN_GO_GRPC_VERSION: "v1.6.2"
+        TERRAFORM_VERSION: "1.15.8"
+        OPENTOFU_VERSION: "1.12.5"
+        TERRAGRUNT_VERSION: "1.1.1"
+        NODE_MAJOR: "22"
+        PODMAN_PY_VERSION: "5.7.0"
+
+    init: true
+    command: ["sleep", "infinity"]
+    working_dir: /app
+
+    volumes:
+      - type: bind
+        source: ../..
+        target: /app
+        bind:
+          create_host_path: true
+
+    environment:
+      GOFLAGS: "-buildvcs=false"
+      GOCACHE: /tmp/go-cache
+      GOMODCACHE: /go/pkg/mod
+      CHECKPOINT_DISABLE: "1"
+      TF_IN_AUTOMATION: "1"
+      NPM_CONFIG_UPDATE_NOTIFIER: "false"
+      # Acceptance-test wiring — populated from gopass by the caller, never
+      # committed. Empty here means `make test` runs unit tests only.
+      CVP_ENDPOINT: "${CVP_ENDPOINT:-}"
+      CVP_AUTH_METHOD: "${CVP_AUTH_METHOD:-}"
+      CVP_TOKEN: "${CVP_TOKEN:-}"
+      TF_ACC: "${TF_ACC:-}"
+
+    cap_drop:
+      - ALL
+
+    security_opt:
+      - "label=disable"
+      - "no-new-privileges:true"
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "sleep"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+    develop:
+      watch:
+        - action: sync
+          path: ../..
+          target: /app
+          ignore:
+            - bin/
+            - dist/
+            - .git/
+            - .worktrees/

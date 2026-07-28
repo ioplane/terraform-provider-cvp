@@ -1,0 +1,23 @@
+# buf module configuration for the vendored CloudVision API protos.
+# Spec: https://buf.build/docs/configuration/v2/buf-yaml
+#
+# The protos under api/proto/ are vendored from Arista's public
+# `cloudvision-apis` (github.com/aristanetworks/cloudvision-apis) — only the
+# services this provider consumes are kept (workspace.v1, studio.v1,
+# changecontrol.v1) plus their transitive imports (fmp, google wrappers).
+# We generate our own Go stubs from them (see buf.gen.yaml + ADR 0005) instead
+# of depending on `cloudvision-go`.
+version: v2
+
+modules:
+  - path: api/proto
+
+lint:
+  use:
+    - STANDARD
+  # Vendored third-party protos: do not fail our lint on Arista's naming.
+  disallow_comment_ignores: false
+
+breaking:
+  use:
+    - FILE

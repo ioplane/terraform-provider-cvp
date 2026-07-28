@@ -1,0 +1,147 @@
+# Containerfile.dev — terraform-provider-cvp development image.
+#
+# Spec: Containerfile.5
+#   https://github.com/containers/common/blob/main/docs/Containerfile.5.md
+# Buildable natively with Buildah and `podman build` (no external frontend).
+#
+# Build:   podman build -f deployments/containers/Containerfile.dev -t terraform-provider-cvp-dev:local .
+# Run via: deployments/compose/compose.dev.yml (Compose Specification).
+#
+# Image references are unqualified and resolved through Podman's
+# unqualified-search-registries (see deployments/containers/registries.conf).
+#
+# Everything the daily loop needs is baked in: Go toolchain, golangci-lint v2,
+# govulncheck, osv-scanner, gotestsum, Terraform + OpenTofu + Terragrunt CLIs,
+# tfplugindocs, goreleaser, and the Node/Python documentation linters. The host
+# needs only Podman + podman-compose.
+
+ARG GO_VERSION=1.26
+ARG GOLANGCI_LINT_VERSION=v2.12.2
+ARG GOVULNCHECK_VERSION=v1.6.0
+ARG OSV_SCANNER_VERSION=v2.4.0
+ARG TFPLUGINDOCS_VERSION=v0.25.0
+ARG GORELEASER_VERSION=v2.17.1
+ARG BUF_VERSION=v1.72.0
+ARG PROTOC_GEN_GO_VERSION=v1.36.11
+ARG PROTOC_GEN_GO_GRPC_VERSION=v1.6.2
+ARG TERRAFORM_VERSION=1.15.8
+ARG OPENTOFU_VERSION=1.12.5
+ARG TERRAGRUNT_VERSION=1.1.1
+ARG NODE_MAJOR=22
+ARG PODMAN_PY_VERSION=5.7.0
+
+FROM golang:1.26-trixie AS dev
+
+ARG GOLANGCI_LINT_VERSION
+ARG GOVULNCHECK_VERSION
+ARG OSV_SCANNER_VERSION
+ARG TFPLUGINDOCS_VERSION
+ARG GORELEASER_VERSION
+ARG BUF_VERSION
+ARG PROTOC_GEN_GO_VERSION
+ARG PROTOC_GEN_GO_GRPC_VERSION
+ARG TERRAFORM_VERSION
+ARG OPENTOFU_VERSION
+ARG TERRAGRUNT_VERSION
+ARG NODE_MAJOR
+ARG PODMAN_PY_VERSION
+
+# TF_ACC is unset by default: acceptance tests only run when the caller opts in
+# with `TF_ACC=1` and provides live CVP endpoint + credentials (see AGENTS.md).
+ENV GOFLAGS="-buildvcs=false" \
+    GOCACHE=/tmp/go-cache \
+    GOMODCACHE=/go/pkg/mod \
+    CHECKPOINT_DISABLE=1 \
+    TF_IN_AUTOMATION=1 \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+LABEL org.opencontainers.image.title="terraform-provider-cvp-dev" \
+      org.opencontainers.image.description="Development image for terraform-provider-cvp." \
+      org.opencontainers.image.source="https://github.com/ioplane/terraform-provider-cvp" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+# Base OS tooling.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+        git \
+        ca-certificates \
+        tzdata \
+        make \
+        bash \
+        curl \
+        unzip \
+        jq \
+        gnupg \
+        python3 \
+        python3-pip \
+ && rm -rf /var/lib/apt/lists/*
+
+# Node.js (npm-based documentation linters).
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    install -m 0755 -d /etc/apt/keyrings \
+ && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+      | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+ && chmod a+r /etc/apt/keyrings/nodesource.gpg \
+ && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+      > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+# Terraform, OpenTofu, Terragrunt CLIs (pinned). Both engines are installed so
+# acceptance/examples can be exercised against either; Terragrunt drives the
+# multi-unit examples under examples/terragrunt/.
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in amd64) tfarch=amd64 ;; arm64) tfarch=arm64 ;; *) echo "unsupported arch $arch" >&2; exit 1 ;; esac; \
+    curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${tfarch}.zip" -o /tmp/tf.zip; \
+    unzip -d /usr/local/bin /tmp/tf.zip; \
+    curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${tfarch}.zip" -o /tmp/tofu.zip; \
+    unzip -d /usr/local/bin /tmp/tofu.zip tofu; \
+    curl -fsSL "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_${tfarch}" -o /usr/local/bin/terragrunt; \
+    chmod +x /usr/local/bin/terragrunt; \
+    rm -f /tmp/tf.zip /tmp/tofu.zip; \
+    terraform version; tofu version; terragrunt --version
+
+# Go tooling (pinned). tfplugindocs generates the registry docs; goreleaser
+# builds the signed release bundle; the rest are the quality gates.
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION} \
+ && go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION} \
+ && go install github.com/google/osv-scanner/v2/cmd/osv-scanner@${OSV_SCANNER_VERSION} \
+ && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@${TFPLUGINDOCS_VERSION} \
+ && go install github.com/goreleaser/goreleaser/v2@${GORELEASER_VERSION} \
+ && go install gotest.tools/gotestsum@latest \
+ && go install github.com/bufbuild/buf/cmd/buf@${BUF_VERSION} \
+ && go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION} \
+ && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
+
+# npm-based documentation linters (Markdown / cspell / commitlint).
+RUN --mount=type=cache,target=/root/.npm \
+    npm install -g \
+        markdownlint-cli2@latest \
+        cspell@latest \
+        @commitlint/cli@latest \
+        @commitlint/config-conventional@latest
+
+# Python tooling: yamllint, junit2html, podman-py for automation parity.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --break-system-packages --no-cache-dir \
+        yamllint \
+        junit2html \
+        "podman==${PODMAN_PY_VERSION}"
+
+WORKDIR /app
+VOLUME /app
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD pgrep -x sleep >/dev/null || exit 1
+
+CMD ["sleep", "infinity"]

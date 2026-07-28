@@ -1,0 +1,79 @@
+# goreleaser v2 configuration for terraform-provider-cvp.
+# Follows the canonical Terraform Registry publishing layout:
+#   https://goreleaser.com/customization/
+#   https://developer.hashicorp.com/terraform/registry/providers/publishing
+#
+# The Terraform Registry mandates GPG-signed SHA256SUMS plus a manifest.json;
+# an SPDX SBOM is attached in addition for supply-chain provenance.
+version: 2
+
+project_name: terraform-provider-cvp
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: terraform-provider-cvp
+    binary: '{{ .ProjectName }}_v{{ .Version }}'
+    main: .
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .ShortCommit }}
+      - -X main.date={{ .Date }}
+    goos: [linux, darwin, windows, freebsd]
+    goarch: [amd64, arm64, arm, "386"]
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: "386"
+      - goos: windows
+        goarch: arm
+
+archives:
+  - id: terraform-provider-cvp
+    formats: [zip]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+  algorithm: sha256
+
+signs:
+  # Terraform Registry requires a detached GPG signature over the SHA256SUMS.
+  - artifacts: checksum
+    args:
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
+sboms:
+  - artifacts: archive
+    documents: ["${artifact}.spdx.json"]
+
+release:
+  github:
+    owner: ioplane
+    name: terraform-provider-cvp
+  draft: false
+  prerelease: auto
+  mode: replace
+  extra_files:
+    - glob: 'terraform-registry-manifest.json'
+      name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+
+changelog:
+  disable: true
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
