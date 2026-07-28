@@ -95,6 +95,14 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   against the netlab2 lab (create/read/idempotency/update/import/destroy at a
   studio root). Secret inputs (write-only, design.md D6) are a tracked follow-up
   (backlog §1).
+- **`provider::cvp::studio_path` provider-defined function (Terraform ≥ 1.8).**
+  Assembles a `cvp_studio_inputs` `path` (`list(string)`) from ordered variadic
+  segments: a string is emitted verbatim (group member / resolver id), a
+  single-key object becomes bracket key-notation (`{ vrfName = "RED-VRF" }` →
+  `"[vrfName=RED-VRF]"`, numbers stringified so `{ vlanId = 100 }` →
+  `"[vlanId=100]"`); no segments yields `[]` (the studio root). Generic, pure and
+  offline — it does not validate against any studio schema (CVP does that on
+  write). Unit-tested and exercised end-to-end via `terraform apply`.
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC
