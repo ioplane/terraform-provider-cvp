@@ -1,4 +1,8 @@
+<div align="center">
+
 # Agent & contributor guide — terraform-provider-cvp
+
+</div>
 
 This is the canonical guide for anyone — human or agent — working in this repo.
 [`CODEX.md`](CODEX.md) and [`CLAUDE.md`](CLAUDE.md) are thin pointers to this

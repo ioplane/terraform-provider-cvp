@@ -1,4 +1,8 @@
+<div align="center">
+
 # Contributing
+
+</div>
 
 This provider follows the same house standard as the sibling `pulumi-eos` and
 `arista-cvp-re` repositories. Read [`AGENTS.md`](AGENTS.md) first — it is the

@@ -1,4 +1,8 @@
+<div align="center">
+
 # CODEX.md
+
+</div>
 
 This repository's working guide for agents is **[`AGENTS.md`](AGENTS.md)** —
 read it first. It is the single source of truth for role, environment,

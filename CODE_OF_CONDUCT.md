@@ -1,4 +1,8 @@
+<div align="center">
+
 # Contributor Covenant Code of Conduct
+
+</div>
 
 ## Our Pledge
 

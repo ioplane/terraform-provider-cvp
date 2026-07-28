@@ -1,4 +1,8 @@
+<div align="center">
+
 # ADR 0001 — Delivery methodology
+
+</div>
 
 - **Status:** Accepted
 - **Date:** 2026-07-28

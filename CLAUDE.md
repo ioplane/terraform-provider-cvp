@@ -1,4 +1,8 @@
+<div align="center">
+
 # CLAUDE.md
+
+</div>
 
 > Guidance for automated agents and contributors working in this repository.
 

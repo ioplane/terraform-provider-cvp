@@ -1,4 +1,8 @@
+<div align="center">
+
 # Development methodology
+
+</div>
 
 This is the delivery method for `terraform-provider-cvp`, chosen and owned by
 the PM/architect/developer roles jointly. It is deliberately consistent with the

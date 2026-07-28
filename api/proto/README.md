@@ -1,4 +1,8 @@
+<div align="center">
+
 # Vendored CloudVision API protobufs
+
+</div>
 
 This directory holds the **vendored** Protocol Buffer definitions for the subset
 of the Arista CloudVision Resource APIs that `terraform-provider-cvp` consumes.

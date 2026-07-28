@@ -1,4 +1,8 @@
+<div align="center">
+
 # Changelog conventions
+
+</div>
 
 [`CHANGELOG.md`](../../CHANGELOG.md) follows
 [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).

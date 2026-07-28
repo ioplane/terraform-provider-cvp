@@ -1,4 +1,8 @@
+<div align="center">
+
 # terraform-provider-cvp — design
+
+</div>
 
 **Date**: 2026-07-16
 **Scope**: I5 phase from `docs/plans/2026-07-16-cvp-integration-plan.md`.

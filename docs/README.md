@@ -1,4 +1,8 @@
+<div align="center">
+
 # Documentation
+
+</div>
 
 Engineering docs for `terraform-provider-cvp`. Start with [`AGENTS.md`](../AGENTS.md).
 

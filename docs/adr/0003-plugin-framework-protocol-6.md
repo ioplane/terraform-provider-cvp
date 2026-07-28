@@ -1,4 +1,8 @@
+<div align="center">
+
 # ADR 0003 — Terraform Plugin Framework, protocol 6
+
+</div>
 
 - **Status:** Accepted
 - **Date:** 2026-07-28

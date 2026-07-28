@@ -1,4 +1,8 @@
+<div align="center">
+
 # ADR 0002 — License: Apache-2.0
+
+</div>
 
 - **Status:** Accepted
 - **Date:** 2026-07-28

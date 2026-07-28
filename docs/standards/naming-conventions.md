@@ -1,4 +1,8 @@
+<div align="center">
+
 # Naming conventions
+
+</div>
 
 Consistent names make the repository searchable, sortable, and legible to both
 humans and agents. This standard adapts two general references —

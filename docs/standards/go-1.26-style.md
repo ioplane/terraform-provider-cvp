@@ -1,4 +1,8 @@
+<div align="center">
+
 # Go 1.26 patterns, antipatterns, standards
+
+</div>
 
 Project Go standard for `terraform-provider-cvp`. Pinned to **Go 1.26.5** (dev
 container `golang:1.26-trixie`). Aligned with the official
