@@ -9,6 +9,13 @@ read it first. It is the single source of truth for role, environment,
 standards, tooling (LSP + `context7`/`arista-mcp` MCP), the netlab2 CVP lab,
 `gopass` secrets, workflow, and quality gates.
 
+> **Source of truth — never from memory.** Any CVP/EOS or library API fact
+> (endpoint, RPC/field, TerminAttr flag, EOS CLI, auth/RBAC) must be verified
+> from a source before use: `arista-mcp`, **`cvprac`** (`../cvprac` — current CVP
+> REST endpoints), the cloudvision-apis protos, `arista-cvp-re`, `context7`.
+> Recall is a hypothesis, never an answer; a guessed endpoint's 4xx says nothing
+> about permissions. See AGENTS.md and the `cvp-api-lookup` skill.
+
 ## Current context
 
 - Repository: `ioplane/terraform-provider-cvp`
