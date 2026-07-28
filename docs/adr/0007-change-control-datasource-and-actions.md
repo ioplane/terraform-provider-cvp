@@ -47,14 +47,17 @@ mutating resource:
 ### Data source `cvp_change_control`
 
 Read a CC's status by `id` (`ChangeControlService.GetOne`): computed `status`,
-`error`, `device_ids`, `approved`, `started`, `completion_reason`. This is what
-practitioners reference after a workspace submit (`cvp_workspace.cc_ids[0]`).
+`error`, `device_ids`, `approved`, `started`, `completion_reason`, and the
+current **`version`** (the `last_modified` timestamp of the CC config). This is
+what practitioners reference after a workspace submit (`cvp_workspace.cc_ids[0]`);
+`version` feeds the approve action so a review is pinned to the exact content it
+saw.
 
 ### Actions (`ProviderWithActions`, Terraform ≥ 1.14)
 
 | Action | Service call |
 |---|---|
-| `cvp_change_control_approve` | `ApproveConfigService.Set{approve, version}` — version-pinned; `version` read from the CC state |
+| `cvp_change_control_approve` | `ApproveConfigService.Set{approve, version}` — the caller passes the **`version` they reviewed** (from the data source); if the CC changed since, the stale version is rejected, so approval can never silently cover newly modified content |
 | `cvp_change_control_start` | `ChangeControlConfigService.Set{start}` — execute the (approved) CC |
 
 `approve` is deliberately a separate action (never an `auto_approve` attribute),

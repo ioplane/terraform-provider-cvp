@@ -118,16 +118,6 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   approve/start/rollback actions; the read-only `ChangeControlService`
   (GetOne/GetAll/Subscribe) is the state view for computed status (design.md D3,
   ADR 0006).
-- **Change-control design frozen ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)).**
-  `cvp_change_control` will be a **data source** (computed `status`, `error`,
-  `device_ids`) plus **approve / start Actions** (`ApproveConfigService.Set`
-  version-pinned; `ChangeControlConfigService.Set` start flag) — not a mutating
-  resource with `auto_approve` / `wait_for_execution`, upholding the
-  separation-of-duties non-goal (symmetric with ADR 0006). Supersedes the v0.1
-  `cvp_change_control` resource stub and `design.md` D3. Implementation is
-  evidence-gated: a live probe found **0 change controls** on the lab (they are
-  created by submitting a workspace with real device changes), so live
-  acceptance needs a safe fixture first.
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC
@@ -136,6 +126,20 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 
 ### Changed
 
+- **BREAKING: `cvp_change_control` will be a data source + actions, not a
+  resource ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)).**
+  The v0.1 schema-only `cvp_change_control` **resource** stub is superseded by a
+  **data source** (computed `status`, `error`, `device_ids`, `version`) plus
+  **approve / start Actions** (version-pinned `ApproveConfigService.Set`;
+  `ChangeControlConfigService.Set` start flag) — no `auto_approve` /
+  `wait_for_execution`, upholding separation of duties (symmetric with ADR 0006).
+  _Migration:_ a `resource "cvp_change_control"` becomes a
+  `data "cvp_change_control"` (status is read-only) plus explicit
+  `cvp_change_control_approve` / `_start` action invocations; approval/execution
+  are no longer expressed as resource attributes. Supersedes `design.md` D3.
+  Implementation is evidence-gated — a live probe found **0 change controls** on
+  the lab (they are created by submitting a workspace with real device changes),
+  so live acceptance needs a safe fixture first.
 - **BREAKING: `cvp_workspace` schema reworked (ADR 0006).** The `auto_build`,
   `auto_submit` and `auto_approve` booleans are **removed** — the workflow verbs
   are Terraform Actions now (see Added). The stable key attribute is renamed from
