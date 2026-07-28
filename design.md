@@ -127,12 +127,17 @@ Implementation: `google.golang.org/grpc` retry middleware.
 - No gRPC calls yet.
 - Not usable for an actual `terraform apply`.
 
-**v0.2 (usable prototype)**:
+**v0.2 (usable prototype)** — in progress:
 
-- Full CRUD wired. `cvp_workspace` is **done** — CRUD + import + workflow
-  Actions, live acceptance green against the um-cvp lab (D9, ADR 0006).
-- One acceptance test per resource (against the um-cvp lab).
-- Documented breaking-change probability.
+- `cvp_workspace` **done** — CRUD + import + workflow Actions, live acceptance
+  green against the um-cvp lab (D9, ADR 0006).
+- `cvp_studio_inputs` **done** — CRUD + import + D1 prefix-overlap guard, live
+  acceptance green.
+- `provider::cvp::studio_path` function **done** — generic path builder.
+- Remaining: `cvp_change_control` (+ its Actions). Compatibility contract in
+  [`docs/compatibility.md`](docs/compatibility.md).
+- One acceptance test per resource (against the um-cvp lab); documented
+  breaking-change probability.
 
 **v0.3 (production-track)**:
 

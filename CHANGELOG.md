@@ -103,6 +103,13 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   `"[vlanId=100]"`); no segments yields `[]` (the studio root). Generic, pure and
   offline — it does not validate against any studio schema (CVP does that on
   write). Unit-tested and exercised end-to-end via `terraform apply`.
+- **Compatibility contract (`docs/compatibility.md`).** A consumer-facing matrix
+  of the minimum Terraform / OpenTofu core version per capability — base
+  resources, provider-defined functions (Terraform ≥ 1.8 / OpenTofu ≥ 1.7), and
+  **Actions (Terraform ≥ 1.14; not available in OpenTofu)** — plus the wire
+  protocol (6.0), framework and Go versions. Linked from the README and docs
+  index; `commitlint` now also allows the `functions` and `actions` commit
+  scopes.
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC
