@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -34,6 +35,11 @@ var (
 	_ resource.ResourceWithConfigure      = &studioInputsResource{}
 	_ resource.ResourceWithImportState    = &studioInputsResource{}
 	_ resource.ResourceWithValidateConfig = &studioInputsResource{}
+)
+
+var (
+	errInvalidImportID = errors.New("invalid import id: expected `{workspace_id}/{studio_id}/{path...}`")
+	errPathOverlap     = errors.New("overlapping studio input path (a higher Set overwrites lower entries — design.md D1)")
 )
 
 type studioInputsResource struct {
@@ -127,17 +133,10 @@ func (r *studioInputsResource) Create(ctx context.Context, req resource.CreateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	in, diags := plan.toInput(ctx)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.write(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.SetInputs(ctx, in); err != nil {
-		resp.Diagnostics.AddError("Cannot set studio inputs", err.Error())
-		return
-	}
-	plan.ID = types.StringValue(buildID(in.WorkspaceID, in.StudioID, in.Path))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -173,16 +172,10 @@ func (r *studioInputsResource) Update(ctx context.Context, req resource.UpdateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	in, diags := plan.toInput(ctx)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(r.write(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.client.SetInputs(ctx, in); err != nil {
-		resp.Diagnostics.AddError("Cannot update studio inputs", err.Error())
-		return
-	}
-	plan.ID = types.StringValue(buildID(in.WorkspaceID, in.StudioID, in.Path))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -204,22 +197,39 @@ func (r *studioInputsResource) Delete(ctx context.Context, req resource.DeleteRe
 
 // ImportState parses the composite id `{workspace_id}/{studio_id}/{path...}`.
 func (r *studioInputsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	parts := strings.Split(req.ID, "/")
-	if len(parts) < 2 || parts[0] == "" || parts[1] == "" {
-		resp.Diagnostics.AddError("Invalid import id",
-			fmt.Sprintf("Expected `{workspace_id}/{studio_id}/{path...}`, got %q.", req.ID))
+	workspaceID, studioID, segs, err := parseID(req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid import id", err.Error())
 		return
 	}
-	segs := parts[2:]
 	pathVal, diags := types.ListValueFrom(ctx, types.StringType, segs)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("workspace_id"), parts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("studio_id"), parts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("workspace_id"), workspaceID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("studio_id"), studioID)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("path"), pathVal)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+}
+
+// write applies plan to CVP (overlap guard + Set) and stamps the computed id.
+// Shared by Create and Update.
+func (r *studioInputsResource) write(ctx context.Context, plan *studioInputsModel) diag.Diagnostics {
+	in, diags := plan.toInput(ctx)
+	if diags.HasError() {
+		return diags
+	}
+	if err := r.checkNoPrefixOverlap(ctx, in.StudioID, in.WorkspaceID, in.Path); err != nil {
+		diags.AddError("Overlapping studio input path", err.Error())
+		return diags
+	}
+	if err := r.client.SetInputs(ctx, in); err != nil {
+		diags.AddError("Cannot write studio inputs", err.Error())
+		return diags
+	}
+	plan.ID = types.StringValue(buildID(in.WorkspaceID, in.StudioID, in.Path))
+	return diags
 }
 
 func (m studioInputsModel) toInput(ctx context.Context) (cvp.InputsInput, diag.Diagnostics) {
@@ -241,8 +251,70 @@ func listToStrings(ctx context.Context, l types.List) ([]string, diag.Diagnostic
 	return segs, diags
 }
 
-// buildID renders the composite id. Path segments are bracket-notation and do
-// not contain '/', so a '/' join is unambiguous for import.
+// buildID renders the composite id `{workspace_id}/{studio_id}/{path...}`. Each
+// component is percent-escaped, because a resolver path segment may itself
+// contain '/' (e.g. `[tags/query=device:leaf1]`, studio.proto), so a raw '/'
+// join would not round-trip through parseID.
 func buildID(workspaceID, studioID string, path []string) string {
-	return strings.Join(append([]string{workspaceID, studioID}, path...), "/")
+	parts := append([]string{workspaceID, studioID}, path...)
+	escaped := make([]string, len(parts))
+	for i, p := range parts {
+		escaped[i] = url.PathEscape(p)
+	}
+	return strings.Join(escaped, "/")
+}
+
+// parseID is the inverse of buildID. Returns (workspace_id, studio_id, path).
+func parseID(id string) (string, string, []string, error) {
+	raw := strings.Split(id, "/")
+	if len(raw) < 2 || raw[0] == "" || raw[1] == "" {
+		return "", "", nil, fmt.Errorf("%w: got %q", errInvalidImportID, id)
+	}
+	dec := make([]string, len(raw))
+	for i, p := range raw {
+		d, uerr := url.PathUnescape(p)
+		if uerr != nil {
+			return "", "", nil, fmt.Errorf("%w: segment %q: %w", errInvalidImportID, p, uerr)
+		}
+		dec[i] = d
+	}
+	return dec[0], dec[1], dec[2:], nil
+}
+
+// pathIsPrefixConflict reports whether existing and target are in a strict
+// prefix relationship — one is a proper prefix of the other. Such a pair
+// silently clobbers in CVP (a higher Set overwrites lower entries), so it is
+// rejected (design.md D1). Equal paths are not a prefix conflict.
+func pathIsPrefixConflict(existing, target []string) bool {
+	if len(existing) == len(target) {
+		return false
+	}
+	shorter, longer := existing, target
+	if len(existing) > len(target) {
+		shorter, longer = target, existing
+	}
+	for i := range shorter {
+		if shorter[i] != longer[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// checkNoPrefixOverlap enforces D1 at apply time: no other configured input path
+// in the same studio+workspace may be a prefix of (or prefixed by) target. The
+// framework offers no plan-time hook to see sibling resources, so this runs on
+// Set; the offending apply fails instead of silently erasing a sibling.
+func (r *studioInputsResource) checkNoPrefixOverlap(ctx context.Context, studioID, workspaceID string, target []string) error {
+	existing, err := r.client.ListInputPaths(ctx, studioID, workspaceID)
+	if err != nil {
+		return err
+	}
+	for _, e := range existing {
+		if pathIsPrefixConflict(e, target) {
+			return fmt.Errorf("%w: path %v overlaps existing input path %v in the same studio and workspace — "+
+				"split or merge these inputs", errPathOverlap, target, e)
+		}
+	}
+	return nil
 }

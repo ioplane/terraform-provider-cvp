@@ -88,9 +88,13 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   the composite id `{workspace_id}/{studio_id}/{path...}`. The key
   (`studio_id`, `workspace_id`, `path`) is immutable (`RequiresReplace`);
   `inputs_json` is validated as JSON at plan time, and CVP validates it against
-  the studio schema on write. Live acceptance against the netlab2 lab
-  (create/read/idempotency/update/import/destroy at a studio root). Secret
-  inputs (write-only, design.md D6) are a tracked follow-up (backlog §1).
+  the studio schema on write. Prefix-overlapping sibling paths (which CVP would
+  silently clobber, a higher `Set` overwriting lower entries) are rejected before
+  a write (design.md D1); the import id percent-escapes each segment so resolver
+  paths containing `/` (e.g. `[tags/query=…]`) round-trip. Live acceptance
+  against the netlab2 lab (create/read/idempotency/update/import/destroy at a
+  studio root). Secret inputs (write-only, design.md D6) are a tracked follow-up
+  (backlog §1).
 - **Capability backlog** — `docs/backlog.md` maps modern Terraform (Actions,
   managed identity, ephemeral/write-only, functions, `terraform test`),
   Terragrunt 1.1 (stacks/catalog), and HCP/TFE enterprise (dynamic OIDC

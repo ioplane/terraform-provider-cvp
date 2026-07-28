@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,6 +80,34 @@ func (c *Client) GetInputs(ctx context.Context, studioID, workspaceID string, pa
 		Path:        v.GetKey().GetPath().GetValues(),
 		InputsJSON:  v.GetInputs().GetValue(),
 	}, nil
+}
+
+// ListInputPaths returns every configured input path for a studio in a
+// workspace. Used to enforce the D1 no-prefix-overlap rule before a Set.
+func (c *Client) ListInputPaths(ctx context.Context, studioID, workspaceID string) ([][]string, error) {
+	stream, err := c.InputsConfig().GetAll(ctx, &studiov1.InputsConfigStreamRequest{
+		PartialEqFilter: []*studiov1.InputsConfig{{
+			Key: &studiov1.InputsKey{
+				StudioId:    wrapperspb.String(studioID),
+				WorkspaceId: wrapperspb.String(workspaceID),
+			},
+		}},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cvp: list studio input paths (studio %q): %w", studioID, err)
+	}
+	var paths [][]string
+	for {
+		msg, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cvp: list studio input paths (studio %q): %w", studioID, err)
+		}
+		paths = append(paths, msg.GetValue().GetKey().GetPath().GetValues())
+	}
+	return paths, nil
 }
 
 // DeleteInputs removes the inputs config entry at a studio path in the
