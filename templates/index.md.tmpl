@@ -1,0 +1,20 @@
+---
+page_title: "CloudVision Portal Provider"
+description: |-
+  Manage Arista CloudVision Portal (CVP) — workspaces, Studio inputs, and change
+  control — with Terraform.
+---
+
+# CloudVision Portal Provider
+
+The CVP provider manages Arista CloudVision Portal resources over gRPC/TLS,
+built on the Terraform Plugin Framework (protocol 6).
+
+Authentication supports three native methods — `cert` (client mTLS), `session`
+(cookie), and `bearer` (rotatable API token, recommended for CI/CD).
+
+## Example usage
+
+{{ tffile "examples/provider/provider.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
