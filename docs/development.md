@@ -16,7 +16,8 @@ The container (`golang:1.26-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))
 bakes in: Go 1.26.5, golangci-lint v2.12.2, govulncheck, osv-scanner, gotestsum,
 Terraform 1.15.8, OpenTofu 1.12.5, Terragrunt 1.1.1, tfplugindocs v0.25.0,
-goreleaser v2.17.1, and the Node/Python doc linters.
+goreleaser v2.17.1, buf, the Node/Python doc linters, and the Astral toolchain
+(uv 0.11.33 + ruff 0.16.0 + ty 0.0.64) for the podman-py automation.
 
 ## OCI / Compose specs followed
 
@@ -34,8 +35,8 @@ goreleaser v2.17.1, and the Node/Python doc linters.
 git clone https://github.com/ioplane/terraform-provider-cvp
 cd terraform-provider-cvp
 
-make up      # build the dev image + start the container
-make shell   # shell inside it
+task up      # build the dev image + start the container
+task shell   # shell inside it
 ```
 
 ## Worktree + PR loop (mandatory)
@@ -47,8 +48,8 @@ worktree and integrate via a Pull Request (see
 ```bash
 scripts/worktree.sh new feat/studio/inputs-batch   # worktree under ../.worktrees/
 cd ../.worktrees/feat/studio/inputs-batch
-make up && make shell
-# …work, make all, commit, push…
+task up && task shell
+# …work, task all, commit, push…
 scripts/worktree.sh rm feat/studio/inputs-batch    # after the PR merges
 ```
 
@@ -63,26 +64,29 @@ export CONTAINERS_REGISTRIES_CONF=$(pwd)/deployments/containers/registries.conf
 
 | Step | Command |
 |---|---|
-| Start dev container | `make up` |
-| Build provider | `make build` |
-| Unit tests (+race) | `make test` |
-| Lint Go | `make lint` (auto-fix: `make lint-fix`) |
-| Format examples | `make tffmt` / `make tffmt-check` |
-| Vulnerabilities | `make vulncheck` · `make osv-scan` |
-| Registry docs | `make docs` / `make docs-check` |
-| Lint docs | `make lint-docs` |
-| Pre-PR gate (no live CVP) | `make all` |
-| Full gate (+ live acceptance) | `make verify` |
-| Versions of the toolchain | `make versions` |
-| Tear down | `make down` |
+| Start dev container | `task up` |
+| Build provider | `task build` |
+| Unit tests (+race) | `task test` |
+| Lint Go | `task lint` (auto-fix: `task lint-fix`) |
+| Lint Python automation (ruff + ty) | `task lint-py` (auto-fix: `task fmt-py`) |
+| Format examples | `task tffmt` / `task tffmt-check` |
+| Vulnerabilities | `task vulncheck` · `task osv-scan` |
+| Registry docs | `task docs` / `task docs-check` |
+| Lint docs | `task lint-docs` |
+| Pre-PR gate (no live CVP) | `task all` |
+| Full gate (+ live acceptance) | `task verify` |
+| Versions of the toolchain | `task versions` |
+| Tear down | `task down` |
 
 ## Automation parity (podman-py)
 
-Make targets, raw `podman-compose`, and the Python automation under
+`task` targets, raw `podman-compose`, and the Python automation under
 [`scripts/automation/`](../scripts/automation/) are three entry points to the
 same container. The Python path uses
-[`podman-py`](https://github.com/containers/podman-py) so CI or ad-hoc scripts
-can drive the same lifecycle without the Make layer.
+[`podman-py`](https://github.com/containers/podman-py) (the library, over the
+Podman REST socket) so CI or ad-hoc scripts can drive the same image build and
+container lifecycle without the `task` layer. It is linted with **ruff** and
+type-checked with **ty**, run via **uv** (`task lint-py` / `task fmt-py`).
 
 ## Acceptance tests against the lab
 
@@ -94,7 +98,7 @@ export CVP_ENDPOINT="um-cvp01.<lab-domain>:443"
 export CVP_AUTH_METHOD="bearer"
 export CVP_TOKEN="$(gopass show -o um-cvp/<token-path>)"
 export TF_ACC=1
-make testacc
+task testacc
 ```
 
 ## LSP + MCP during development

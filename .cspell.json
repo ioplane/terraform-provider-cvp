@@ -128,7 +128,14 @@
     "funcs",
     "protoc",
     "protobuf",
-    "protos"
+    "protos",
+    "pyproject",
+    "Taskfile",
+    "taskfile",
+    "ruff",
+    "astral",
+    "noqa",
+    "PodmanClient"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

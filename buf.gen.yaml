@@ -4,7 +4,7 @@
 # Generates Go message + gRPC client stubs into internal/pb. Plugins are pinned
 # so output is reproducible; versions match the dev image ARGs and go.mod.
 #
-# Run:  make proto   (→ buf generate)
+# Run:  task proto   (→ buf generate)
 version: v2
 
 managed:

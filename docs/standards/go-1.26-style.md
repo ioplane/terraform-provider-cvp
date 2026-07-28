@@ -56,7 +56,7 @@ Before writing Go, consult the current API via the `gopls` LSP and the
 | Imports | `gofumpt` order; `goimports.local-prefixes` set to the module path. |
 | Test names | `Test<Subject>_<Behaviour>`; acceptance tests `TestAcc<Resource>_<Case>`. |
 | Test parallelism | `t.Parallel()` mandatory in **unit** tests; **forbidden** in acceptance tests (shared live CVP). Enforced by `paralleltest` with a `test/acceptance/` exclusion. |
-| Race detector | `-race` always on in `make test` and CI. |
+| Race detector | `-race` always on in `task test` and CI. |
 | Build tags | `//go:build acceptance` for live-CVP tests. |
 | Vulnerability gate | `govulncheck` + `osv-scanner`; any allow-listed advisory needs a documented reason. |
 

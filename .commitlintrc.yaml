@@ -33,7 +33,7 @@ rules:
       - docs          # documentation
       - examples      # examples/ HCL + Terragrunt
       - ci            # GitHub Actions / workflows
-      - build         # Containerfile / Makefile / compose
+      - build         # Containerfile / Taskfile.yml / compose
       - deps          # dependency bumps
       - release       # release plumbing
       - test          # tests / acceptance harness

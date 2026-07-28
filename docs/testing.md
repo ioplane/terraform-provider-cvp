@@ -63,11 +63,11 @@ resource.Test(t, resource.TestCase{
 
 ## CI
 
-- `make test` (unit + race) runs on every push/PR in `golang:1.26-trixie`.
+- `task test` (unit + race) runs on every push/PR in `golang:1.26-trixie`.
 - PR gate jobs (all SHA-pinned, see `.github/workflows/`): build-and-test,
   lint-go, vulncheck, **proto** (buf lint + `internal/pb` in-sync check),
   terraform (fmt), lint-docs, commitlint (PR title), **dependency-review**, plus
   the Security (CodeQL/gosec/Trivy) and Scorecard workflows.
 - Acceptance tests are **out of the PR gate**; they run in a protected,
-  credentialed job or locally via `make verify`.
+  credentialed job or locally via `task verify`.
 - Coverage uploaded to Codecov; JUnit report via `gotestsum`.

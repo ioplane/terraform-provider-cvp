@@ -19,28 +19,39 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   provider:
   - Podman/OCI dev container (`golang:1.26-trixie`) with the full toolchain
     (Go 1.26.5, golangci-lint v2.12.2, govulncheck, osv-scanner, Terraform
-    1.15.8, OpenTofu 1.12.5, Terragrunt 1.1.1, tfplugindocs, goreleaser),
-    driven by `podman-compose` (`deployments/`).
+    1.15.8, OpenTofu 1.12.5, Terragrunt 1.1.1, tfplugindocs, goreleaser, buf,
+    uv/ruff/ty), driven by `podman-compose` (`deployments/`).
   - `golangci-lint` v2 allowlist (~90 linters, severity-tiered) tuned for the
     Terraform Plugin Framework.
-  - `Makefile` (container-driven), `.goreleaser.yml` v2 (GPG-signed
-    `SHA256SUMS` + SPDX SBOM per the Terraform Registry contract), and four
-    SHA-pinned GitHub Actions workflows (CI, release, security, Scorecard) plus
-    Dependabot.
+  - `Taskfile.yml` (container-driven), `.goreleaser.yml` v2 (GPG-signed
+    `SHA256SUMS` + SPDX SBOM per the Terraform Registry contract), and
+    SHA-pinned GitHub Actions workflows (CI, release, security, Scorecard,
+    dependency-review) plus Dependabot.
   - Governance: `AGENTS.md` (+ `CODEX.md` / `CLAUDE.md` pointers), Apache-2.0
-    `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `VERSION`, and this changelog.
+    `LICENSE`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`,
+    `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates, `VERSION`, and this
+    changelog.
   - Standards docs under `docs/standards/` (naming, versioning, commits,
     changelog, Go 1.26 style, Terraform-provider best practices,
     Terragrunt integration) and a chosen delivery methodology
     (`docs/methodology.md`).
+  - Mandatory git-worktree + Pull-Request-only workflow (`scripts/worktree.sh`);
+    branch protection ruleset on `main`.
 
 ### Changed
 
+- **Build runner migrated from `make` to [Task](https://taskfile.dev)**
+  (`Taskfile.yml` replaces the `Makefile`); all docs and hooks updated.
+- **`scripts/automation/build.py` now uses the `podman-py` library** (Podman
+  REST socket) for the image build + container lifecycle instead of shelling
+  out, and is linted with **ruff** + type-checked with **ty**, run via **uv**
+  (`task lint-py` / `task fmt-py`; `pyproject.toml` added; CI job + pre-commit
+  hook added).
 - **Dependencies bumped to latest (July 2026):** Go directive `1.26.5`;
   `terraform-plugin-framework` `v1.13.0` → `v1.19.0`; `grpc` `v1.78.0` →
   `v1.82.1` (clears the GO-2026-4762 advisory noted in the v0.1 skeleton);
-  `protobuf` `v1.36.11`. Added `terraform-plugin-testing v1.16.0`,
-  `-validators v0.19.0`, `-log v0.10.0`, `-go v0.31.0` to the module graph.
+  `protobuf` `v1.36.11`; transitive `golang.org/x/{net,text}` bumped to patched
+  releases (govulncheck: 0).
 
 ### Removed
 
@@ -50,9 +61,23 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   Replaced by a **custom buf-generated gRPC client** (ADR 0005): vendored protos
   under `api/proto/`, generated stubs in `internal/pb/` via `buf`
   (`buf.yaml` + `buf.gen.yaml`, pinned `protoc-gen-go` v1.36.11 /
-  `protoc-gen-go-grpc` v1.6.2), `make proto` / `proto-lint` / `proto-breaking`,
+  `protoc-gen-go-grpc` v1.6.2), `task proto` / `proto-lint` / `proto-breaking`,
   and `buf` added to the dev image. Actual stub generation is the first P1
   gRPC-wiring step; the provider builds dependency-free until then.
+
+### Fixed
+
+- **`task testacc` now passes `-tags acceptance`** and forwards
+  `CVP_ENDPOINT` / `CVP_AUTH_METHOD` / `CVP_TOKEN` through the container exec, so
+  the acceptance suite actually compiles/runs and authenticates (review finding).
+- **Security workflow jobs retain `contents: read`** — a job-level `permissions`
+  mapping replaces the workflow-level one, so CodeQL/gosec/Trivy needed it added
+  explicitly (review finding).
+- **CI container build step pinned to `bash`** (dash lacked the `${VAR::N}`
+  substring expansion); dependency-review switched to a copyleft deny-list to
+  avoid a false positive on Google's compound-licensed Go modules.
+- Clarified that the golangci-lint gate is zero-findings (any finding fails the
+  run); the severity tiers classify findings, not the exit code (review finding).
 
 ## [0.1.0] — 2026-07-16
 

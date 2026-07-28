@@ -76,11 +76,11 @@ Three, configured natively on the provider (`design.md` D4):
 No host toolchain required — everything runs in the Podman dev container.
 
 ```bash
-make up        # build + start dev container (golang:1.26-trixie)
-make shell     # shell inside it
-make build     # build the provider binary
-make test      # unit tests (+race)
-make all       # build + test + lint + tffmt-check + lint-docs + vulncheck
+task up        # build + start dev container (golang:1.26-trixie)
+task shell     # shell inside it
+task build     # build the provider binary
+task test      # unit tests (+race)
+task all       # build + test + lint + tffmt-check + lint-docs + vulncheck
 ```
 
 See [`docs/development.md`](docs/development.md) for the full loop, and
@@ -111,7 +111,7 @@ terraform-provider-cvp/
 ├── .github/workflows/             # ci · release · security · scorecard
 ├── AGENTS.md · CODEX.md · CLAUDE.md
 ├── CONTRIBUTING.md · SECURITY.md · CHANGELOG.md · VERSION · LICENSE
-├── .golangci.yml · .goreleaser.yml · Makefile · go.mod
+├── .golangci.yml · .goreleaser.yml · Taskfile.yml · go.mod
 └── design.md · README.md
 ```
 

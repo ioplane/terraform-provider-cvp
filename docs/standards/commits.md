@@ -22,7 +22,7 @@ in the `commit-msg` pre-commit hook and on PR titles in CI.
 | `fix` | Bug fix. |
 | `docs` | Documentation only. |
 | `chore` | Repo hygiene / non-product files. |
-| `build` | Build system: `Containerfile`, `Makefile`, `compose`, `go.mod`. |
+| `build` | Build system: `Containerfile`, `Taskfile.yml`, `compose`, `go.mod`. |
 | `ci` | GitHub Actions / workflows. |
 | `refactor` | Behaviour-preserving code change. |
 | `perf` | Performance change. |
