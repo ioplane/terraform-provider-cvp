@@ -89,6 +89,32 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		return
 	}
 
+	// If any value is unknown (a reference to a not-yet-applied resource),
+	// ValueString/ValueBool would collapse it to a zero value and build a
+	// mis-configured client. Refuse to configure until the value is known.
+	for _, u := range []struct {
+		attr    string
+		unknown bool
+	}{
+		{"endpoint", cfg.Endpoint.IsUnknown()},
+		{"auth_method", cfg.AuthMethod.IsUnknown()},
+		{"token", cfg.Token.IsUnknown()},
+		{"cert_pem", cfg.CertPEM.IsUnknown()},
+		{"key_pem", cfg.KeyPEM.IsUnknown()},
+		{"ca_pem", cfg.CAPEM.IsUnknown()},
+		{"insecure_tls", cfg.InsecureTLS.IsUnknown()},
+	} {
+		if u.unknown {
+			resp.Diagnostics.AddAttributeError(path.Root(u.attr),
+				"Unknown provider configuration value",
+				"The CVP provider cannot be configured while "+u.attr+" is unknown. "+
+					"Set it to a static value or apply the resource it references first.")
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	client, err := cvp.New(cvp.Config{
 		Endpoint:    cfg.Endpoint.ValueString(),
 		AuthMethod:  cfg.AuthMethod.ValueString(),

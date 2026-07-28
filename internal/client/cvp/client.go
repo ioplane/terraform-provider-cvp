@@ -9,9 +9,10 @@ import (
 )
 
 // retryServiceConfig retries only transient failures (design.md D7): UNAVAILABLE
-// with exponential backoff, 5 attempts, 1–16 s. Semantic and auth failures
-// (AlreadyExists, NotFound, FailedPrecondition, Unauthenticated, PermissionDenied)
-// are not retried — they fail fast and are mapped to diagnostics by the caller.
+// and DEADLINE_EXCEEDED with exponential backoff, 5 attempts, 1–16 s. Semantic
+// and auth failures (AlreadyExists, NotFound, FailedPrecondition, Unauthenticated,
+// PermissionDenied) are not retried — they fail fast and are mapped to
+// diagnostics by the caller.
 const retryServiceConfig = `{
   "methodConfig": [{
     "name": [{}],
@@ -20,7 +21,7 @@ const retryServiceConfig = `{
       "initialBackoff": "1s",
       "maxBackoff": "16s",
       "backoffMultiplier": 2.0,
-      "retryableStatusCodes": ["UNAVAILABLE"]
+      "retryableStatusCodes": ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
     }
   }]
 }`
