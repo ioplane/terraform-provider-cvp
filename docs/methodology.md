@@ -34,6 +34,25 @@ per-resource discovery loop. The hybrid is the fit.
 | **Architect** | Provider/schema/state contract, ADRs, transport & retry design, non-goals. |
 | **Developer** | Resource implementation, tests, docs, quality gates green. |
 
+## Delivery lifecycle
+
+```mermaid
+flowchart LR
+  R["1 · Requirements"] --> D["2 · Design"] --> I["3 · Implementation"]
+  I --> V["4 · Verification"] --> Rel["5 · Release"] --> M["6 · Maintenance"]
+  M -. "next version" .-> R
+
+  subgraph loop["Implementation — iterative sprints"]
+    direction LR
+    s1["sprint N"] --> s2["per-resource<br/>Definition of Done"] --> s3["make verify<br/>+ lab evidence"]
+    s3 -. "next resource" .-> s1
+  end
+  I -. "expands into" .-> loop
+```
+
+Each arrow between macro-phases is a **signed gate**; a downstream phase does not
+start until the upstream gate passes.
+
 ## Macro-phases (gated)
 
 | Phase | Output | Exit gate |

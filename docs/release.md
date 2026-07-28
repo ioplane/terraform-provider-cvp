@@ -12,6 +12,19 @@ Per [`standards/versioning.md`](standards/versioning.md).
 
 ## Process
 
+```mermaid
+flowchart LR
+  cl["CHANGELOG<br/>cut [X.Y.Z]"] --> ver["bump VERSION"] --> c["commit<br/>chore(release)"]
+  c --> tag["git tag -s vX.Y.Z"] --> push["push tag"]
+  push --> wf["release workflow"]
+  wf --> t["re-run tests"]
+  wf --> gpg["import GPG key"]
+  wf --> notes["extract release notes"]
+  t & gpg & notes --> gr["goreleaser v2"]
+  gr --> art["zip × platforms · SHA256SUMS<br/>GPG .sig · manifest.json · SBOM"]
+  art --> rel["GitHub Release"]
+```
+
 1. Move `CHANGELOG.md` `[Unreleased]` into a dated `## [X.Y.Z] — YYYY-MM-DD`
    section; recreate an empty `[Unreleased]`.
 2. Update [`VERSION`](../VERSION).

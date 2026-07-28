@@ -1,17 +1,48 @@
 # terraform-provider-cvp
 
+<!-- Build & supply chain -->
 [![CI](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/ci.yml/badge.svg)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/ci.yml)
 [![Security](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/security.yml/badge.svg)](https://github.com/ioplane/terraform-provider-cvp/actions/workflows/security.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ioplane/terraform-provider-cvp/badge)](https://securityscorecards.dev/viewer/?uri=github.com/ioplane/terraform-provider-cvp)
-[![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go)](https://go.dev/doc/go1.26)
+<br>
+<!-- Stack & conventions -->
+[![Go 1.26](https://img.shields.io/badge/go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev/doc/go1.26)
+[![Terraform Plugin Framework](https://img.shields.io/badge/terraform-plugin--framework%20v1.19-7B42BC?logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform/plugin/framework)
+[![Conventional Commits](https://img.shields.io/badge/commits-conventional%201.0.0-FE5196?logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
+[![SemVer](https://img.shields.io/badge/semver-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](CONTRIBUTING.md)
 
-Terraform provider for **Arista CloudVision Portal (CVP)**, built on the
-`terraform-plugin-framework` (protocol 6) over gRPC/TLS.
+Terraform provider for **Arista CloudVision Portal (CVP)** — manage workspaces,
+Studio inputs, and change control declaratively over gRPC/TLS. Built on the
+[Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework)
+(protocol 6).
 
-**Status:** v0.1 skeleton — provider schema authored; CRUD hooks stubbed with
-`TODO(P1)`. Not yet usable for a real `terraform apply`. See [`design.md`](design.md)
-for the design and roadmap, and [`AGENTS.md`](AGENTS.md) for how to work here.
+> [!NOTE]
+> **Status: v0.1 skeleton.** Provider schema is authored; CRUD hooks are stubbed
+> (`TODO(P1)`), so this is not yet usable for a real `terraform apply`. See
+> [`design.md`](design.md) for the design and roadmap, and [`AGENTS.md`](AGENTS.md)
+> for how to work here.
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+  subgraph TF["Terraform / Terragrunt"]
+    core["terraform · tofu core"]
+  end
+  subgraph P["terraform-provider-cvp · protocol 6"]
+    prov["provider<br/>config · auth · TLS"]
+    res["resources<br/>workspace · studio_inputs · change_control"]
+    cli["client/cvp<br/>gRPC · retry/backoff"]
+  end
+  cvp[("Arista CloudVision Portal")]
+
+  core -- "plugin protocol 6" --> prov --> res --> cli -- "gRPC/TLS" --> cvp
+
+  classDef box fill:#0d1117,stroke:#30363d,color:#c9d1d9;
+  class core,prov,res,cli box;
+```
 
 ## Resources in v0.1
 
@@ -93,6 +124,25 @@ This repo follows the house standard (see the sibling `pulumi-eos`):
 [`docs/standards/`](docs/standards/); process in
 [`docs/methodology.md`](docs/methodology.md); contributor guide in
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Documentation
+
+| Area | Document |
+|---|---|
+| How to work here (agents + humans) | [`AGENTS.md`](AGENTS.md) |
+| Contributing & quality gates | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Governance & branch protection | [`GOVERNANCE.md`](GOVERNANCE.md) |
+| Security policy | [`SECURITY.md`](SECURITY.md) |
+| Design & decisions (D1–D8) | [`design.md`](design.md) |
+| Standards | [`docs/standards/`](docs/standards/) |
+| Methodology | [`docs/methodology.md`](docs/methodology.md) |
+| Architecture · development · testing · release | [`docs/`](docs/) |
+| Decision records | [`docs/adr/`](docs/adr/) |
+
+## Contributing
+
+Development is **worktree + Pull Request only** — `main` is never committed to
+directly. See [`CONTRIBUTING.md`](CONTRIBUTING.md) and `scripts/worktree.sh`.
 
 ## License
 

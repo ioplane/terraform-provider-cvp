@@ -50,15 +50,24 @@ resolution to last-approved wins) interacts badly with parallel resources.
 
 ### D3 — Change-control status as a computed attribute
 
-`cvp_change_control.status` is computed only. Options:
+`cvp_change_control.status` is computed only:
 
-- `PENDING` — created, awaiting approval
-- `APPROVED` — approved, awaiting start
-- `RUNNING` — executing
-- `SUCCESS` / `ROLLED_BACK` / `FAILED` — terminal
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: create
+  PENDING --> APPROVED: approve
+  APPROVED --> RUNNING: start
+  RUNNING --> SUCCESS: complete
+  RUNNING --> FAILED: error
+  FAILED --> ROLLED_BACK: rollback_on_failure
+  SUCCESS --> [*]
+  ROLLED_BACK --> [*]
+  FAILED --> [*]
+```
 
-If `wait_for_execution = true`, the provider blocks until a terminal state.
-Timeout: the `changecontrol_timeout` provider argument, default 30m.
+If `wait_for_execution = true`, the provider blocks until a terminal state
+(`SUCCESS` / `ROLLED_BACK` / `FAILED`). Timeout: the `changecontrol_timeout`
+provider argument, default 30m.
 
 ### D4 — Three auth methods, native provider config
 

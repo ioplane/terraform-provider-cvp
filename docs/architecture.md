@@ -35,6 +35,27 @@ flowchart LR
   Core -->|plugin protocol 6| Prov --> Res --> Cli -->|gRPC/TLS| CVP
 ```
 
+## Apply flow (per resource)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant TF as Terraform core
+  participant P as provider
+  participant C as client/cvp
+  participant CVP as CloudVision Portal
+
+  TF->>P: Plan(config, state)
+  P->>P: validate + plan modifiers
+  P-->>TF: DetailedDiff
+  TF->>P: Apply (Create/Update/Delete)
+  P->>C: gRPC Set/Get (auth + retry)
+  C->>CVP: workspace / studio / changecontrol RPC
+  CVP-->>C: result
+  C-->>P: typed response
+  P-->>TF: new state
+```
+
 ## Resource coverage
 
 Current (v0.1 skeleton, CRUD stubbed): `cvp_workspace`, `cvp_studio_inputs`,
