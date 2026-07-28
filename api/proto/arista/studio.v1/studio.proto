@@ -1,0 +1,804 @@
+// Copyright (c) 2023 Arista Networks, Inc.  All rights reserved.
+// Use of this source code is governed by the Apache License 2.0
+// that can be found in the COPYING file.
+
+// NOTE: This is a workspace-aware Resource API.
+// Please see workspace.v1 for more information.
+syntax = "proto3";
+
+package arista.studio.v1;
+
+option go_package = "github.com/aristanetworks/cloudvision-go/api/arista/studio.v1;studio";
+
+import "fmp/extensions.proto";
+import "fmp/wrappers.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option (fmp.disable_yang) = "repeated-key-fields";
+
+// StudioKey uniquely identifies a studio.
+message StudioKey {
+	option (fmp.model_key) = true;
+
+	// studio_id uniquely identifies the studio in the workspace indicated
+	// by `workspace_id`.
+	google.protobuf.StringValue studio_id = 1;
+	// workspace_id identifies the workspace within which the studio resides.
+	google.protobuf.StringValue workspace_id = 2;
+}
+
+// StudioConfig holds a configuration for a studio.
+//
+// Changes to fields other than `key` and `remove` are applied to
+// a copy of the mainline.
+message StudioConfig {
+	option (fmp.model) = "rw";
+
+	// key uniquely identifies the studio.
+	StudioKey key = 1;
+	// remove indicates whether to remove (`true`) or add (`false`,
+	// unset) the studio identified by the key if the encompassing
+	// workspace merges. Other data fields are not allowed if this
+	// field is set to true.
+	google.protobuf.BoolValue remove = 2;
+	// display_name is the name of this studio as displayed on the UI.
+	// This and remaining fields are config fields, with workspace changes to be applied
+	// on top of mainline. The corresponding `Studio` will be present
+	// in the workspace only if the studio is modified (via this resource).
+	google.protobuf.StringValue display_name = 3;
+	// description is a brief description of the studio.
+	google.protobuf.StringValue description = 4;
+	// template is a script that builds the device configuration from the
+	// inputs that are described by `input_schema`.
+	Template template = 5;
+	// input_schema is the schema for the studio inputs that are processed
+	// by `template`.
+	InputSchema input_schema = 6;
+}
+
+// StudioSummary holds basic information about a studio.
+message StudioSummary {
+	option (fmp.model) = "ro";
+
+	// key uniquely identifies the studio.
+	StudioKey key = 1;
+	// display_name is the name of this studio as displayed on the UI.
+	google.protobuf.StringValue display_name = 2;
+	// description is a brief description of the studio.
+	google.protobuf.StringValue description = 3;
+	// immutable indicates if read-write studio management
+	// access over a given studio is granted or not.
+	// If studio is immutable, its display name, description,
+	// schema and template cannot be modified.
+	google.protobuf.BoolValue immutable = 4;
+	// entities indicate all the entities of the studio.
+	Entities entities = 5;
+	// in_use indicates that the studio is in use, i.e. there are non-empty inputs,
+	// and assigned to some devices, either in a given workspace, or in mainline.
+	google.protobuf.BoolValue in_use = 6;
+	// from_package indicates that this studio was created by a package, and can only be modified
+	// by the packaging service. It stores packageID.
+	google.protobuf.StringValue from_package = 7;
+}
+
+// Entity holds the basic information of an entity.
+message Entity {
+	// entity_type is the type of the entity.
+	EntityType entity_type = 1;
+	// last_modified_at is the time at which the entity was last modified.
+	google.protobuf.Timestamp last_modified_at = 2;
+	// last_modified_by is the name of the user that last modified the entity.
+	google.protobuf.StringValue last_modified_by = 3;
+	// removed indicates if the entity is removed.
+	google.protobuf.BoolValue removed = 4;
+}
+
+// Entities is a list of Entity.
+message Entities {
+	// values is a map from EntityType enum name to Entity.
+	// Keys are the EntityType enum names defined below, e.g.:
+	//
+	// ```
+	// "ENTITY_TYPE_INPUTS" -> Entity{
+	//     entity_type:      ENTITY_TYPE_INPUTS,
+	//     last_modified_at: 2026-05-07T12:34:56Z,
+	//     last_modified_by: "admin",
+	//     removed:          false,
+	// }
+	// ```
+	map<string, Entity> values = 1;
+}
+
+// EntityType enumerates the set of entity types.
+enum EntityType {
+	// ENTITY_TYPE_UNSPECIFIED indicates an unspecified entity type.
+	ENTITY_TYPE_UNSPECIFIED = 0;
+	// ENTITY_TYPE_STUDIO indicates the Studio entity type.
+	ENTITY_TYPE_STUDIO = 1;
+	// ENTITY_TYPE_INPUTS indicates the Inputs entity type.
+	ENTITY_TYPE_INPUTS = 2;
+	// ENTITY_TYPE_ASSIGNED_TAGS indicates the AssignedTags entity type.
+	ENTITY_TYPE_ASSIGNED_TAGS = 3;
+	// ENTITY_TYPE_BUILD_HOOK indicates the BuildHook entity type.
+	ENTITY_TYPE_BUILD_HOOK = 4;
+	// ENTITY_TYPE_AUTOFILL_ACTION indicates the AutofillAction entity type.
+	ENTITY_TYPE_AUTOFILL_ACTION = 5;
+	// ENTITY_TYPE_CONFIGLET indicates the Configlet entity type for
+	// static config studio.
+	ENTITY_TYPE_CONFIGLET = 6;
+	// ENTITY_TYPE_CONFIGLET_ASSIGNMENT indicates the ConfigletAssignment
+	// entity type for static config studio.
+	ENTITY_TYPE_CONFIGLET_ASSIGNMENT = 7;
+	// ENTITY_TYPE_DEPENDENCIES indicates the Dependencies entity type.
+	ENTITY_TYPE_DEPENDENCIES = 8;
+}
+
+// Studio holds the active state for a studio.
+message Studio {
+	option (fmp.model) = "ro";
+
+	// key uniquely identifies the studio.
+	StudioKey key = 1;
+	// created_at is the time at which the studio was created.
+	google.protobuf.Timestamp created_at = 2;
+	// created_by is the name of the user that created the studio.
+	google.protobuf.StringValue created_by = 3;
+	// last_modified_at is the time at which the studio was last modified.
+	google.protobuf.Timestamp  last_modified_at = 4;
+	// last_modified_by is the name of the user that last modified the studio.
+	google.protobuf.StringValue last_modified_by = 5;
+	// display_name is the name of this studio as displayed on the UI.
+	// This and remaining fields are config fields, with workspace changes applied on top of
+	// mainline. This resource will be present in the workspace only if
+	// the studio is modified (via the `StudioConfig` resource).
+	google.protobuf.StringValue display_name = 6;
+	// description is a brief description of the studio.
+	google.protobuf.StringValue description = 7;
+	// template is a script that builds the device configuration from the
+	// inputs that are described by `input_schema`.
+	Template template = 8;
+	// input_schema is the schema for the studio inputs that are processed
+	// by `template`.
+	InputSchema input_schema = 9;
+	reserved 10;
+	// from_package indicates that this studio was created by a package, and can only be modified
+	// by the packaging service.
+	google.protobuf.StringValue from_package = 11;
+}
+
+// AssignedTagsConfig holds a configuration to assign a studio to a set of devices
+// matching a tag query.
+message AssignedTagsConfig {
+	option (fmp.model) = "rw";
+
+	// key uniquely identifies the studio to which to assign devices.
+	StudioKey key = 1;
+	// remove indicates whether to remove (`true`) or add (`false`,
+	// unset) the tag assignments involving the studio identified
+	// by the key if the encompassing workspace merges. Other data
+	// fields are not allowed if this field is set to true.
+	google.protobuf.BoolValue remove = 2;
+	// query is a tag query string that conforms to the CloudVision
+	// tag query language. E.g., the query, `"datacenter:NYC,SFO AND
+	// sflow:enabled"`, matches all devices with sflow enabled in
+	// data centers NYC and SFO.
+	google.protobuf.StringValue query = 3;
+}
+
+// AssignedTags can be used to retrieve additional metadata about a
+// studio's `AssignedTagsConfig`.
+message AssignedTags {
+	option (fmp.model) = "ro";
+
+	// key uniquely identifies the studio to which devices were assigned.
+	StudioKey key = 1;
+	// created_at is the time at which the assignment was first created.
+	google.protobuf.Timestamp created_at = 2;
+	// created_by is the name of the user that created the assignment.
+	google.protobuf.StringValue created_by = 3;
+	// last_modified_at is the time at which the assignment was last modified.
+	google.protobuf.Timestamp  last_modified_at = 4;
+	// last_modified_by is the name of the user that last modified the assignment.
+	google.protobuf.StringValue last_modified_by = 5;
+	// query is a tag query string that conforms to the CloudVision
+	// tag query language. See `AssignedTagsConfig`.
+	google.protobuf.StringValue query = 6;
+}
+
+// InputsKey identifies a set of inputs for a particular studio.
+message InputsKey {
+	option (fmp.model_key) = true;
+	// studio_id uniquely identifies the studio in the workspace indicated
+	// by `workspace_id`.
+	google.protobuf.StringValue studio_id = 1;
+	// workspace_id uniquely identifies the workspace in which the studio resides.
+	google.protobuf.StringValue workspace_id = 2;
+	// path is the sequence of elements that uniquely identify an input field.
+	// An empty path (`[]`) stands for the root of the inputs, or the entire
+	// set of inputs for the studio.
+	//
+	// The members of a group are referenced by field name. E.g., for a group
+	// A with a member B, the path to B would be `["A", "B"]`.
+	//
+	// Collection and resolver members can be referenced in two ways:
+	//
+	// 1. Index-based: Using an integer string index.
+	//    E.g., for a collection A with three members, the path to the
+	//    second member would be `["A", "1"]`.
+	//
+	// 2. Key-based: Using bracket notation to specify
+	//    key-value pairs for keyed collections:
+	//    `["collectionName", "[keyName=keyValue]", ...]`
+	//    E.g., for a collection of NTP servers keyed by IP address:
+	//    `["ntpServers", "[ip=10.10.10.10]", "vrf"]`
+	//
+	// For resolver fields with tag queries, bracket notation is supported
+	// with the mandatory "inputs" keyword:
+	// `["resolverName", "[tags/query=tagQuery]", "inputs", ...]`
+	// E.g., for a device resolver with tag query "device:leaf1":
+	// `["devices", "[tags/query=device:leaf1]", "inputs", "hostname"]`
+	//
+	// Both index-based and key-based formats are supported for collections
+	// and resolvers.
+	fmp.RepeatedString path = 3;
+}
+
+// InputsConfig is used to input values into a studio.
+//
+// NOTE: Setting an input at a higher path overwrite any prior
+// `Set`s at lower paths. E.g.,
+//
+// 1. Set `["A", "X"]` to `"foo"`
+// 2. Set `["A", "Y"]` to `"bar"`
+// 3. Set `["A"]` to `{"X": "bar"}`
+//
+// The resulting inputs would be:
+// ```
+// { "A": { "X": "bar" } }
+// ```
+message InputsConfig {
+	option (fmp.model) = "rw";
+
+	// key uniquely identifies the set of inputs for the studio (at some path).
+	InputsKey key = 1;
+	// remove indicates whether to remove (`true`) or add (`false`,
+	// unset) the inputs identified by the key if the encompassing
+	// workspace merges. Other data fields are not allowed if this
+	// field is set to true.
+	google.protobuf.BoolValue remove = 2;
+	// inputs is the value of the input field at the path as a
+	// JSON string. It can be the value for a simple or complex
+	// input field.
+	//
+	// Simple types (booleans, integers, floats, strings) map to
+	// their JSON equivalents.
+	//
+	// Complex types map to either arrays or objects:
+	//
+	// * The group field type maps to a JSON object, where keys
+	//   are group members.
+	//
+	// * The collection field type maps to a JSON array.
+	//
+	// * The resolver field type maps to a JSON array, where each
+	//   element is an object of the form:
+	//   ```
+	//   {
+	//	"tags":   { "query": <query> },
+	//	"inputs": <input>
+	//   }
+	//   ```
+	//   Above, `<input>` is the value of the base field of the resolver.
+	//   E.g., if the base field is a group with one string member `"A"`,
+	//   the resolver inputs would be specified as:
+	//   ```
+	//   "inputs": { "A": <value> }
+	//   ```
+	google.protobuf.StringValue inputs = 3;
+}
+
+// Inputs is used to retrieve the existing inputs to a studio.
+message Inputs {
+	option (fmp.model) = "ro";
+
+	// key uniquely identifies the set of inputs for the studio (at some path).
+	InputsKey key = 1;
+	// created_at is the time at which the inputs were first set.
+	google.protobuf.Timestamp created_at = 2;
+	// created_by is the name of the user that first set the inputs.
+	google.protobuf.StringValue created_by = 3;
+	// last_modified_at is the time at which the inputs were last modified.
+	google.protobuf.Timestamp  last_modified_at = 4;
+	// last_modified_by is the name of the user that last modified the inputs.
+	google.protobuf.StringValue last_modified_by = 5;
+	// inputs is the value of the input field at the path as a JSON string.
+	//
+	// NOTE: For `GetAll` and `Subscribe`, if the JSON is too large, it will
+	// be split across multiple messages such that each is less than the Resource
+	// API message size limit (1MB).
+	google.protobuf.StringValue inputs = 6;
+}
+
+// TemplateType defines the set of supported languages that can
+// be used in studio templates.
+enum TemplateType {
+	// TEMPLATE_TYPE_UNSPECIFIED indicates an unspecified template type.
+	TEMPLATE_TYPE_UNSPECIFIED = 0;
+	// TEMPLATE_TYPE_MAKO is the Mako templating language for Python.
+	// More information: https://www.makotemplates.org
+	TEMPLATE_TYPE_MAKO = 1;
+	// TEMPLATE_TYPE_JINJA is the Jinja templating language for Python.
+	// More information: https://palletsprojects.com/p/jinja
+	TEMPLATE_TYPE_JINJA = 2;
+	// TEMPLATE_TYPE_GO is the Go templating language.
+	// More information: https://pkg.go.dev/text/template
+	//
+	// NOTE: Not all template functions are supported for this type.
+	TEMPLATE_TYPE_GO = 3;
+}
+
+// Template defines a template for a studio.
+message Template {
+	// type specifies the language that this template uses.
+	TemplateType type = 1;
+	// body contains the actual source code of the template.
+	google.protobuf.StringValue body = 2;
+}
+
+// InputFieldType defines the set of possible data types for
+// values that can be input into a studio.
+enum InputFieldType {
+	// INPUT_FIELD_TYPE_UNSPECIFIED indicates an unspecified input data type.
+	INPUT_FIELD_TYPE_UNSPECIFIED = 0;
+	// INPUT_FIELD_TYPE_BOOLEAN is the data type for a boolean value.
+	INPUT_FIELD_TYPE_BOOLEAN = 1;
+	// INPUT_FIELD_TYPE_INTEGER is the data type for an integer value.
+	INPUT_FIELD_TYPE_INTEGER = 2;
+	// INPUT_FIELD_TYPE_FLOAT is the data type for a float value.
+	INPUT_FIELD_TYPE_FLOAT = 3;
+	// INPUT_FIELD_TYPE_STRING is the data type for a string value.
+	INPUT_FIELD_TYPE_STRING = 4;
+	// INPUT_FIELD_TYPE_GROUP is the data type for an unordered group of
+	// inputs of any type. This type is used in cases where inputs are
+	// required to be consolidated into an object for use in the template
+	// or to attach multiple inputs under a resolver or collection.
+	INPUT_FIELD_TYPE_GROUP = 5;
+	// INPUT_FIELD_TYPE_COLLECTION is the data type for an ordered collection
+	// of inputs of the same type. This type is used in cases where multiple
+	// input values of the same type should be given for a field, and where
+	// ordering matters.
+	INPUT_FIELD_TYPE_COLLECTION = 6;
+	// INPUT_FIELD_TYPE_RESOLVER is the data type for an input that allows
+	// its member input to be assigned based on a tag query match. This
+	// type is used in cases where the input value is conditional on a
+	// device or a group of devices. The query is resolved at run-time
+	// and each affected device is given the value that corresponds to
+	// the tag it is assigned to.
+	INPUT_FIELD_TYPE_RESOLVER = 7;
+	// INPUT_FIELD_TYPE_TAG_MATCHER is the data type for an input that allows
+	// an unordered set of devices or interfaces to be selected. The set of
+	// devices or interfaces that are to be selected are specified by a tag
+	// query, resolved at run-time.
+	INPUT_FIELD_TYPE_TAG_MATCHER = 8;
+
+}
+
+// ResolverFieldInputMode defines the set of ways a resolver tag query
+// can be specified in a studio.
+enum ResolverFieldInputMode {
+	// RESOLVER_FIELD_INPUT_MODE_UNSPECIFIED indicates an unspecified resolver input mode.
+	RESOLVER_FIELD_INPUT_MODE_UNSPECIFIED = 0;
+	// RESOLVER_FIELD_INPUT_MODE_SINGLE_DEVICE_TAG allows devices to be
+	// selected based on a single tag label.
+	RESOLVER_FIELD_INPUT_MODE_SINGLE_DEVICE_TAG = 1;
+	// RESOLVER_FIELD_INPUT_MODE_SINGLE_INTERFACE_TAG allows interfaces
+	// to be selected based on a single tag label.
+	RESOLVER_FIELD_INPUT_MODE_SINGLE_INTERFACE_TAG = 2;
+	// RESOLVER_FIELD_INPUT_MODE_MULTI_DEVICE_TAG allows devices to be
+	// selected based on any tag label.
+	RESOLVER_FIELD_INPUT_MODE_MULTI_DEVICE_TAG = 3;
+	// RESOLVER_FIELD_INPUT_MODE_MULTI_INTERFACE_TAG allows interfaces
+	// to be selected based on any tag label.
+	RESOLVER_FIELD_INPUT_MODE_MULTI_INTERFACE_TAG = 4;
+}
+
+// ResolverFieldDisplayMode defines the set of ways in which the matching
+// devices or interfaces should be displayed on the UI.
+enum ResolverFieldDisplayMode {
+	// RESOLVER_FIELD_DISPLAY_MODE_UNSPECIFIED indicates an unspecified resolver display mode.
+	RESOLVER_FIELD_DISPLAY_MODE_UNSPECIFIED = 0;
+	// RESOLVER_FIELD_DISPLAY_MODE_ALL instructs the UI to show all
+	// matching devices or interfaces, including ones that have no
+	// inputs.
+	RESOLVER_FIELD_DISPLAY_MODE_ALL = 1;
+	// RESOLVER_FIELD_DISPLAY_MODE_SPARSE instructs the UI to show
+	// only matching devices or interfaces that have inputs.
+	RESOLVER_FIELD_DISPLAY_MODE_SPARSE = 2;
+}
+
+// TagMatcherFieldMode defines the set of ways a tag query for matching
+// device or interfaces can be specified in a studio.
+enum TagMatcherFieldMode {
+	// TAG_MATCHER_FIELD_MODE_UNSPECIFIED indicates an unspecified tag matcher mode.
+	TAG_MATCHER_FIELD_MODE_UNSPECIFIED = 0;
+	// TAG_MATCHER_FIELD_MODE_SINGLE_DEVICE_TAG allows devices to be
+	// selected based on a single tag label.
+	TAG_MATCHER_FIELD_MODE_SINGLE_DEVICE_TAG = 1;
+	// TAG_MATCHER_FIELD_MODE_SINGLE_INTERFACE_TAG allows interfaces
+	// to be selected based on a single tag label.
+	TAG_MATCHER_FIELD_MODE_SINGLE_INTERFACE_TAG = 2;
+	// TAG_MATCHER_FIELD_MODE_MULTI_DEVICE_TAG allows devices to be
+	// selected based on any tag label.
+	TAG_MATCHER_FIELD_MODE_MULTI_DEVICE_TAG = 3;
+	// TAG_MATCHER_FIELD_MODE_MULTI_INTERFACE_TAG allows interfaces
+	// to be selected based on any tag label.
+	TAG_MATCHER_FIELD_MODE_MULTI_INTERFACE_TAG = 4;
+}
+
+// BooleanInputFieldProps defines the set of properties for a single
+// boolean field in a studio input schema.
+message BooleanInputFieldProps {
+	// default_value is the default value of the boolean.
+	google.protobuf.BoolValue default_value = 1;
+}
+
+// IntegerInputFieldProps defines the set of properties for a single
+// integer field in a studio input schema.
+message IntegerInputFieldProps {
+	// default_value is the default value of the integer.
+	google.protobuf.Int64Value default_value = 1;
+	// static_options defines the set of possible values for the integer.
+	fmp.RepeatedInt64 static_options = 2;
+	// range imposes a range (inclusive) on the value of the integer.
+	// This should be of the form `"<min>..<max>"`. E.g., `"-10..10"`
+	// means the integer can be anything in between and including `-10`
+	// and `10`.
+	google.protobuf.StringValue range = 3;
+	// dynamic_options defines the set of possible values for the integer
+	// based on the possible values for other integers in the schema.
+	// Each field should be referenced by a JSON object of the form
+	// `{ "fieldId": <field_id> }`.
+	//
+	// E.g,
+	// ```
+	// [
+	//   { "fieldId": "vlanFieldID" },
+	//   { "fieldId": "vniFieldID" }
+	// ]
+	// ```
+	// Here, the possible values for the integers identified by
+	// `"vlanFieldID"` and `"vniFieldID"` are used as the possible
+	// values for this integer.
+	fmp.RepeatedString dynamic_options = 4;
+	// extra_values_allowed allows adding values to the field in
+	// addition to what's allowed by static_options/dynamic_options.
+	google.protobuf.BoolValue extra_values_allowed = 5;
+}
+
+// FloatInputFieldProps defines the set of properties for a single
+// float field in a studio input schema.
+message FloatInputFieldProps {
+	// default_value is the default value of the float.
+	google.protobuf.FloatValue default_value = 2;
+	// static_options defines the set of possible values for the float.
+	fmp.RepeatedFloat static_options = 3;
+	// dynamic_options defines the set of possible values for the float
+	// based on the possible values for other floats in the schema.
+	// Each field should be referenced by a JSON object of the form
+	// `{ fieldId: field_id }`.
+	//
+	// E.g,
+	//
+	// ```
+	// [
+	//   { fieldId: floatField1ID },
+	//   { fieldId: floatField2ID }
+	// ]
+	// ```
+	// Here, the possible values for the floats identified by
+	// `floatField1ID` and `floatField2ID` are used as the
+	// possible values for this float.
+	fmp.RepeatedString dynamic_options = 4;
+	// extra_values_allowed allows adding values to the field in
+	// addition to what's allowed by static_options/dynamic_options.
+	google.protobuf.BoolValue extra_values_allowed = 5;
+}
+
+// StringInputFieldProps defines the set of properties for a single
+// string field in a studio input schema.
+message StringInputFieldProps {
+	// default_value is the default value of the string.
+	google.protobuf.StringValue default_value = 2;
+	// static_options defines the set of possible values for the string.
+	fmp.RepeatedString static_options = 3;
+	// dynamic_options defines the set of possible values for the string
+	// based on the possible values for other strings in the schema.
+	// Each field should be referenced by a JSON object of the form
+	// `{ "fieldId": <field_id> }`.
+	//
+	// E.g,
+	// ```
+	// [
+	//   { "fieldId": "deviceFieldID" },
+	//   { "fieldId": "ipFieldID" }
+	// ]
+	// ```
+	// Here, the possible values for the strings identified by
+	// `"deviceFieldID"` and `"ipFieldID"` are used as the possible
+	// values for this string.
+	fmp.RepeatedString dynamic_options = 4;
+	// length imposes a length range (inclusive) on the value of the
+	// string. The should be of the form `"<min>..<max>"`. E.g.,
+	// `"3..7"` means the value of the string can be three to seven
+	// characters long.
+	google.protobuf.StringValue length = 5;
+	// pattern imposes a regular expression matching constraint on
+	// the value of the string. This should be a Google RE2-compliant
+	// regular expression (https://github.com/google/re2/wiki/Syntax).
+	google.protobuf.StringValue pattern = 6;
+	// format imposes a well-known format on the value of the string.
+	// The supported formats are:
+	//
+	// * `"ip"`: an IPv4 or IPv6 address
+	// * `"ipv4"`: an IPv4 address
+	// * `"ipv6"`: an IPv6 address
+	// * `"mac"`: a MAC address
+	// * `"cidr"`: an IPv4 or IPv6 address in CIDR notation (e.g. 10.1.1.1/24, 2001:db8:a0b::1/32)
+	// * `"cidrv4"`: an IPv4 address in CIDR notation (e.g. 10.1.1.1/24)
+	// * `"cidrv6"`: an IPv6 address in CIDR notation (e.g. 2001:db8:a0b::1/32)
+	// * `"url"`: a URL (e.g., http://www.google.com)
+	google.protobuf.StringValue format = 7;
+	// is_secret specifies whether the string is a secret and its
+	// value should be masked. E.g., if this is set to `true` and
+	// the value of the string is `"secret-value-1"`, it will be
+	// masked as `"**********"`.
+	google.protobuf.BoolValue is_secret = 8;
+	// extra_values_allowed allows adding values to the field in
+	// addition to what's allowed by static_options/dynamic_options.
+	google.protobuf.BoolValue extra_values_allowed = 9;
+}
+
+// GroupInputFieldProps defines the set of properties for a single
+// group field in a studio input schema.
+message GroupInputFieldProps {
+	// members (required) identifies the member fields of the group
+	// as defined in the schema.
+	fmp.RepeatedString members = 1;
+}
+
+// CollectionInputFieldProps defines the set of properties for a single
+// collection field in a studio input schema.
+message CollectionInputFieldProps {
+	// base_field_id (required) identifies the field in the schema
+	// that should be used as the type for each element in the
+	// collection.
+	google.protobuf.StringValue base_field_id = 1;
+	// key can be used when `base_field_id` references a group field,
+	// and it identifies the field in that group that should be used
+	// as the key for each element in the collection. This is used
+	// for display purposes only.
+	google.protobuf.StringValue key = 2;
+}
+
+// ResolverInputFieldProps defines the set of properties for a single
+// resolver field in a studio input schema.
+message ResolverInputFieldProps {
+	// base_field_id (required) identifies the field in the schema
+	// to which the resolver query maps.
+	google.protobuf.StringValue base_field_id = 1;
+	// display_mode (required) is the display mode of the resolver.
+	ResolverFieldDisplayMode display_mode = 2;
+	// input_mode (required) is the input mode of the resolver.
+	ResolverFieldInputMode input_mode = 3;
+	// input_tag_label can be used when `input_mode` is one of
+	// `RESOLVER_FIELD_INPUT_MODE_SINGLE_*_TAG` and it specifies
+	// the tag label must be used in the resolver query.
+	google.protobuf.StringValue input_tag_label = 4;
+	// tag_filter_query limits the set of elements that the
+	// resolver query can return. E.g., `"device:D1,D2"` will
+	// constrain results to the devices D1 and D2.
+	google.protobuf.StringValue tag_filter_query = 5;
+}
+
+// TagMatcherInputFieldProps defines the set of properties for a single
+// selector field in a studio input schema.
+message TagMatcherInputFieldProps {
+	// tag_matcher_mode (required) is the tag mode of the matcher.
+	TagMatcherFieldMode tag_matcher_mode = 1;
+	// tag_matcher_label can be used when `tag_matcher_mode` is one of
+	// `TAG_MATCHER_FIELD_MODE_SINGLE_*_TAG` and it specifies
+	// the tag label which must be used in the match query.
+	google.protobuf.StringValue tag_matcher_label = 2;
+	// tag_filter_query limits the set of devices that the
+	// match query can return. E.g., `"device:D1,D2"` will
+	// constrain results to the devices D1 and D2.
+	google.protobuf.StringValue tag_filter_query = 3;
+	// resolver_filtering_allowed indicates whether results of the
+	// match query be filtered based on what any parent resolvers
+	// allow. This is `true` by default.
+	google.protobuf.BoolValue resolver_filtering_allowed = 4;
+}
+
+// InputField defines the set of properties for a single field in a
+// studio input schema.
+message InputField {
+	// id (required) uniquely identifies the field within the schema.
+	google.protobuf.StringValue id = 1;
+	// type (required) specifies the type for the field.
+	InputFieldType type = 2;
+	// name (required) is the variable name by which the field can be
+	// referenced in the template for the studio.
+	google.protobuf.StringValue name = 3;
+	// label (required) is the label of the field as displayed on the UI.
+	google.protobuf.StringValue label = 4;
+	// description is a short description of the field.
+	google.protobuf.StringValue description = 5;
+	// required indicates whether the field always requires a value. This
+	// is `false` by default.
+	google.protobuf.BoolValue required = 6;
+	// boolean_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_BOOLEAN`.
+	BooleanInputFieldProps boolean_props = 7;
+	// integer_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_INTEGER`.
+	IntegerInputFieldProps integer_props = 8;
+	// float_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_FLOAT`.
+	FloatInputFieldProps float_props = 9;
+	// string_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_STRING`.
+	StringInputFieldProps string_props = 10;
+	// group_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_GROUP`.
+	GroupInputFieldProps group_props = 11;
+	// collection_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_COLLECTION`.
+	CollectionInputFieldProps collection_props = 12;
+	// resolver_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_RESOLVER`.
+	ResolverInputFieldProps resolver_props = 13;
+	// auto_fill_action_id identifies the autofill action that can be
+	// used to automatically populate the value of this field on the
+	// UI.
+	google.protobuf.StringValue auto_fill_action_id = 14;
+	// tag_matcher_props defines properties for the field if it is of type
+	// `INPUT_FIELD_TYPE_TAG_MATCHER`.
+	TagMatcherInputFieldProps tag_matcher_props = 15;
+}
+
+// InputFields is a collection of `InputField`.
+message InputFields {
+	// values (required) is a map from input field ID to `InputField`.
+	map<string, InputField> values = 1;
+}
+
+// Layout specifies the display properties for input fields. This
+// is intended for UI usage only.
+message Layout {
+	// value is a JSON object containing the layout config.
+	google.protobuf.StringValue value = 1;
+}
+
+// InputSchema defines an input schema for a studio, which determines
+// the values that can be input into the studio.
+message InputSchema {
+	// fields (required) are the set of fields that make up the schema.
+	InputFields fields = 1;
+	// layout (UI only) defines the display properties for `fields`.
+	Layout layout = 2;
+}
+
+// SecretInput can be used to retrieve the unmasked value of
+// a secret in a studio.
+message SecretInput {
+	option (fmp.model) = "ro";
+
+	// key identifies the secret in the studio inputs.
+	InputsKey key = 1;
+	// plain_text is the unmasked value of the secret.
+	google.protobuf.StringValue plain_text = 2;
+}
+
+// AutofillActionKey identifies an autofill action.
+message AutofillActionKey {
+	option (fmp.model_key) = true;
+	// studio_id uniquely identifies the studio in the workspace indicated
+	// by `workspace_id`.
+	google.protobuf.StringValue studio_id = 1;
+	// workspace_id uniquely identifies the workspace in which the studio resides.
+	google.protobuf.StringValue workspace_id = 2;
+	// input_field_id uniquely identifies the input field within the schema associated
+	// with the action indicated by `action_id`.
+	google.protobuf.StringValue input_field_id = 3;
+}
+
+// AutofillActionConfig contains configuration information for an autofill action.
+message AutofillActionConfig {
+	option (fmp.model) = "rw";
+	// key uniquely identifies the action-to-studio association.
+	AutofillActionKey key = 1;
+	// remove indicates whether to remove (`true`) or add (`false`, unset)
+	// the autofill action configuration identified by the key if the encompassing
+	// workspace merges. Other data fields are not allowed if this field is set to true.
+	google.protobuf.BoolValue remove = 2;
+	// action_id uniquely identifies the autofill action associated with the input field.
+	google.protobuf.StringValue action_id = 3;
+	// description is an optional field to describe the autofill action that will be
+	// displayed in a tooltip in the UI when the user hovers over the button to run
+	// the autofill action.
+	google.protobuf.StringValue description = 4;
+	// argument_providers is an optional field that specifies how dynamic arguments are
+	// to be provided to the autofill action when executed. If an argument is omitted
+	// from the provider map, it will not be defined in the arguments passed to the scripts.
+	// If the entire field is omitted, no additional argument values will be passed to the
+	// script beyond any statically defined arguments and the system-provided arguments
+	// which are always set in an autofill action execution context (namely InputPath,
+	// StudioId, and WorkspaceId).
+	AutofillArgumentProviders argument_providers = 5;
+}
+
+// AutofillAction can be used to retrieve additional metadata about an autofill action.
+message AutofillAction {
+	option (fmp.model) = "ro";
+	// key uniquely identifies the action-to-studio association.
+	AutofillActionKey key = 1;
+	// created_at is the time at which the inputs were first set.
+	google.protobuf.Timestamp created_at = 2;
+	// created_by is the name of the user that first set the inputs.
+	google.protobuf.StringValue created_by = 3;
+	// last_modified_at is the time at which the inputs were last modified.
+	google.protobuf.Timestamp  last_modified_at = 4;
+	// last_modified_by is the name of the user that last modified the inputs.
+	google.protobuf.StringValue last_modified_by = 5;
+	// action_id uniquely identifies the autofill action associated with the input field.
+	google.protobuf.StringValue action_id = 6;
+	// description is an optional field to describe the autofill action that will be
+	// displayed in a tooltip in the UI when the user hovers over the button to run
+	// the autofill action.
+	google.protobuf.StringValue description = 7;
+	// argument_providers is an optional field that specifies how dynamic arguments are
+	// to be provided to the autofill action when executed. If an argument is omitted
+	// from the provider map, it will not be defined in the arguments passed to the scripts.
+	// If the entire field is omitted, no additional argument values will be passed to the
+	// script beyond any statically defined arguments and the system-provided arguments
+	// which are always set in an autofill action execution context (namely InputPath,
+	// StudioID, and WorkspaceID).
+	AutofillArgumentProviders argument_providers = 8;
+}
+
+// AutofillArgumentProviders is a map of dynamic argument name to argument provider information.
+message AutofillArgumentProviders {
+	// values is a map of dynamic argument name to argument provider information.
+	map<string, AutofillArgumentProvider> values = 1;
+}
+
+// AutofillArgumentProvider describes a particular dynamic argument's type
+// and value (if applicable).
+message AutofillArgumentProvider {
+	// type is the type of argument provider, describing how it is to be
+	// handled when the associated action is called.
+	AutofillProviderType type = 1;
+	// value is the value of the argument, if provided.
+	// When the provider type is PROVIDER_TYPE_USER_SPECIFIED, the field may be nil. If non-nil,
+	// the field contains a default value for the user input.
+	// When the provider type is PROVIDER_TYPE_PREDEFINED, the field contains the predefined
+	// value.
+	// When the provider type is PROVIDER_TYPE_LINKED, the field contains the linked input
+	// field's ID.
+	google.protobuf.StringValue value = 2;
+}
+
+// AutofillProviderType describes the set of possible provided argument types.
+enum AutofillProviderType {
+	// AUTOFILL_PROVIDER_TYPE_UNSPECIFIED indicates that no provider type is specified.
+	AUTOFILL_PROVIDER_TYPE_UNSPECIFIED = 0;
+	// AUTOFILL_PROVIDER_TYPE_USER_SPECIFIED is when an argument is to be
+	// provided at runtime by the user.
+	AUTOFILL_PROVIDER_TYPE_USER_SPECIFIED = 1;
+	// AUTOFILL_PROVIDER_TYPE_PREDEFINED is when an argument has a predefined value.
+	AUTOFILL_PROVIDER_TYPE_PREDEFINED = 2;
+	// AUTOFILL_PROVIDER_TYPE_LINKED is when an argument is linked to another studio input field.
+	AUTOFILL_PROVIDER_TYPE_LINKED = 3;
+}
