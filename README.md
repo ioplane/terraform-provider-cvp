@@ -65,7 +65,10 @@ flowchart LR
 - **v1.0** — 3-tier resource coverage, multi-cluster support, SemVer commitment,
   signed releases + SBOM, Terraform Registry listing.
 
-Full plan and design decisions: [`design.md`](design.md).
+Full plan and design decisions: [`design.md`](design.md). Modern
+Terraform/Terragrunt/enterprise capabilities under evaluation (Actions,
+ephemeral/write-only, identity, dynamic credentials, Stacks, policy-as-code):
+[`docs/backlog.md`](docs/backlog.md).
 
 ## Auth methods
 

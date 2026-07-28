@@ -28,6 +28,7 @@ Engineering docs for `terraform-provider-cvp`. Start with [`AGENTS.md`](../AGENT
 | Doc | Topic |
 |---|---|
 | [methodology.md](methodology.md) | Gated-iterative delivery; roles; evidence discipline. |
+| [backlog.md](backlog.md) | Modern Terraform / Terragrunt / enterprise capabilities to evaluate. |
 | [development.md](development.md) | Podman dev loop; make targets; LSP + MCP. |
 | [testing.md](testing.md) | Unit + acceptance test layers. |
 | [release.md](release.md) | Release flow + Registry contract. |

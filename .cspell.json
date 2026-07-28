@@ -154,7 +154,12 @@
     "initialisation",
     "aerisadmin",
     "cvpservice",
-    "tmpl"
+    "tmpl",
+    "Prio",
+    "pgsteward",
+    "cyrilgdn",
+    "azapi",
+    "tftest"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

@@ -163,3 +163,12 @@ Test lifecycle per resource:
 3. Assert that Read returns the matching inputs.
 4. Delete the workspace via abandon.
 5. Assert there are no leaked resources.
+
+## Open design questions (backlog)
+
+Capabilities and unresolved contract choices to weigh before the v0.2 schema
+freezes are tracked in [`docs/backlog.md`](docs/backlog.md). The highest-leverage
+one is **modeling the workspace workflow verbs (build / submit / approve / start
+/ abandon) as Terraform Actions (1.14)** rather than boolean resource attributes
+— a contract-affecting decision to resolve at the design gate and record as an
+ADR (backlog §6).
