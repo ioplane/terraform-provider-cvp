@@ -18,10 +18,16 @@ import (
 	workspaceres "github.com/ioplane/terraform-provider-cvp/internal/resources/workspace"
 )
 
-type cvpProvider struct{}
+type cvpProvider struct {
+	version string
+}
 
-func New() provider.Provider {
-	return &cvpProvider{}
+// New returns a provider factory bound to the given build version. The version
+// is surfaced through Metadata and injected at build time via -ldflags.
+func New(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &cvpProvider{version: version}
+	}
 }
 
 type providerModel struct {
@@ -43,7 +49,7 @@ type ClientBundle struct {
 
 func (p *cvpProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "cvp"
-	resp.Version = "0.1.0-prototype"
+	resp.Version = p.version
 }
 
 func (p *cvpProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
@@ -97,13 +103,16 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		return
 	}
 
-	conn, err := grpc.DialContext(ctx,
+	// grpc.NewClient is the non-blocking successor to the deprecated
+	// DialContext/WithBlock pair (gRPC ≥ 1.63); the connection is established
+	// lazily on the first RPC. P1 CRUD is responsible for surfacing dial-time
+	// failures as diagnostics.
+	conn, err := grpc.NewClient(
 		cfg.Endpoint.ValueString(),
 		grpc.WithTransportCredentials(creds),
-		grpc.WithBlock(),
 	)
 	if err != nil {
-		resp.Diagnostics.AddError("gRPC dial failed", err.Error())
+		resp.Diagnostics.AddError("gRPC client creation failed", err.Error())
 		return
 	}
 
@@ -112,13 +121,19 @@ func (p *cvpProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	resp.ResourceData = bundle
 }
 
+// buildTLSCreds derives the transport credentials from the provider config.
+// P1 wires cert/session/bearer material and populates diagnostics on parse
+// errors; the returned diagnostics are intentionally empty in the skeleton.
+//
+//nolint:unparam // diags are populated when cert/session parsing lands (P1).
 func buildTLSCreds(cfg *providerModel) (credentials.TransportCredentials, diag.Diagnostics) {
-	// TODO(P1): implement cert/session/bearer TLS setup.
-	// Placeholder — accepts any cert (insecure) for prototype only.
 	if cfg.InsecureTLS.ValueBool() {
+		// Guarded by the documented, opt-in `insecure_tls` provider flag; never
+		// a default. See SECURITY.md.
+		//nolint:gosec // G402: opt-in lab-only flag, not the default path.
 		return credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}), nil
 	}
-	return credentials.NewTLS(&tls.Config{}), nil
+	return credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13}), nil
 }
 
 func (p *cvpProvider) Resources(ctx context.Context) []func() resource.Resource {
