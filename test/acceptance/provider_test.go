@@ -9,6 +9,8 @@ package acceptance
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -26,7 +28,9 @@ var protoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, erro
 	"cvp": providerserver.NewProtocol6WithError(provider.New("acc")()),
 }
 
-// preCheck fails fast when the lab credentials are absent.
+// preCheck fails fast when the lab credentials are absent and wires the token
+// into Terraform as a variable via TF_VAR_cvp_token — never interpolated into
+// the generated HCL (keeps the live credential out of retained test artifacts).
 func preCheck(t *testing.T) {
 	t.Helper()
 	for _, k := range []string{"CVP_ENDPOINT", "CVP_AUTH_METHOD", "CVP_TOKEN"} {
@@ -34,6 +38,7 @@ func preCheck(t *testing.T) {
 			t.Fatalf("%s must be set for acceptance tests", k)
 		}
 	}
+	t.Setenv("TF_VAR_cvp_token", os.Getenv("CVP_TOKEN"))
 }
 
 func envOr(key, fallback string) string {
@@ -43,16 +48,33 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-// providerConfig renders a provider block from the lab environment.
+// runID is a per-test-run namespace so concurrent runs and leaked lab objects
+// stay distinguishable (tf-acc-<runID>-...). Random, not time-based.
+func runID(t *testing.T) string {
+	t.Helper()
+	var b [4]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		t.Fatalf("generate run id: %v", err)
+	}
+	return hex.EncodeToString(b[:])
+}
+
+// providerConfig renders a provider block from the lab environment. The token is
+// a sensitive variable populated from TF_VAR_cvp_token, not inlined.
 func providerConfig() string {
 	return fmt.Sprintf(`
+variable "cvp_token" {
+  type      = string
+  sensitive = true
+}
+
 provider "cvp" {
   endpoint     = %q
   auth_method  = %q
-  token        = %q
+  token        = var.cvp_token
   insecure_tls = %s
 }
-`, os.Getenv("CVP_ENDPOINT"), os.Getenv("CVP_AUTH_METHOD"), os.Getenv("CVP_TOKEN"), envOr("CVP_INSECURE_TLS", "false"))
+`, os.Getenv("CVP_ENDPOINT"), os.Getenv("CVP_AUTH_METHOD"), envOr("CVP_INSECURE_TLS", "false"))
 }
 
 // accClient builds a direct CVP client from the environment for CheckDestroy and

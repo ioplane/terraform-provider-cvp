@@ -26,7 +26,7 @@ func TestAccWorkspaceVerbs_buildAbandon(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mint workspace_id: %v", err)
 	}
-	if err = client.SetWorkspace(ctx, cvp.WorkspaceInput{ID: id, DisplayName: "tf-acc-ws-verbs"}); err != nil {
+	if err = client.SetWorkspace(ctx, cvp.WorkspaceInput{ID: id, DisplayName: "tf-acc-" + runID(t) + "-ws-verbs"}); err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
 	t.Cleanup(func() {

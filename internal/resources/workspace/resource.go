@@ -143,7 +143,21 @@ func (r *workspaceResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	id := plan.WorkspaceID.ValueString()
-	if plan.WorkspaceID.IsUnknown() || plan.WorkspaceID.IsNull() || id == "" {
+	userSupplied := !plan.WorkspaceID.IsUnknown() && !plan.WorkspaceID.IsNull() && id != ""
+	if userSupplied {
+		// Brownfield guard: refuse to adopt/overwrite an existing workspace via
+		// the upsert Set. A pre-existing id must be brought in with import.
+		switch _, err := r.client.GetWorkspace(ctx, id); {
+		case err == nil:
+			resp.Diagnostics.AddError("Workspace already exists",
+				"A workspace with workspace_id "+id+" already exists in CVP. Import it with "+
+					"`terraform import cvp_workspace.<name> "+id+"` instead of creating it.")
+			return
+		case !errors.Is(err, cvp.ErrWorkspaceNotFound):
+			resp.Diagnostics.AddError("Cannot check workspace existence", err.Error())
+			return
+		}
+	} else {
 		generated, err := cvp.NewWorkspaceID()
 		if err != nil {
 			resp.Diagnostics.AddError("Cannot generate workspace_id", err.Error())
@@ -159,7 +173,21 @@ func (r *workspaceResource) Create(ctx context.Context, req resource.CreateReque
 
 	st, err := r.client.GetWorkspace(ctx, id)
 	if err != nil {
-		resp.Diagnostics.AddError("Workspace created but read-back failed", err.Error())
+		// The workspace exists in CVP but could not be read back (transient or
+		// eventual-consistency). Persist a minimal but fully-known state keyed by
+		// the id so Terraform tracks the object for a later refresh or destroy —
+		// otherwise it leaks as an untracked CVP workspace.
+		partial := &cvp.WorkspaceState{
+			ID:                         id,
+			DisplayName:                plan.DisplayName.ValueString(),
+			Description:                plan.Description.ValueString(),
+			ExcludeNetworkProvisioning: plan.ExcludeNetworkProvisioning.ValueBool(),
+		}
+		resp.Diagnostics.Append(applyState(ctx, partial, &plan)...)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		resp.Diagnostics.AddError("Workspace created but read-back failed",
+			"The workspace was created and recorded in state (workspace_id "+id+"), but reading "+
+				"it back failed; a subsequent plan/apply will reconcile it. Error: "+err.Error())
 		return
 	}
 	resp.Diagnostics.Append(applyState(ctx, st, &plan)...)

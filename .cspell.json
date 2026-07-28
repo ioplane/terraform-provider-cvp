@@ -25,6 +25,8 @@
     "tfprotov",
     "cvpadmin",
     "cerr",
+    "jsonencode",
+    "vrfs",
     "cvaas",
     "cvprac",
     "configlet",

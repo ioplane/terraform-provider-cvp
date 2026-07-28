@@ -16,8 +16,9 @@ func TestAccWorkspace_basic(t *testing.T) {
 	preCheck(t)
 
 	const rn = "cvp_workspace.test"
-	name := "tf-acc-ws-basic"
-	updated := "tf-acc-ws-basic (updated)"
+	rid := runID(t)
+	name := "tf-acc-" + rid + "-ws-basic"
+	updated := name + " (updated)"
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: protoV6ProviderFactories,
