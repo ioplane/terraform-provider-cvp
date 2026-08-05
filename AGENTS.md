@@ -6,7 +6,8 @@
 
 This is the canonical guide for anyone — human or agent — working in this repo.
 [`CODEX.md`](CODEX.md) and [`CLAUDE.md`](CLAUDE.md) are thin pointers to this
-file. Read it before touching code.
+file; Claude Code, Codex and Gemini CLI all read it. Read it before touching
+code, and follow it exactly.
 
 ## Role
 
@@ -20,10 +21,12 @@ The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
 
 1. **Use the dev container.** No host toolchain. `task up && task shell`.
    Everything (Go, Terraform, golangci-lint, tfplugindocs, goreleaser) is baked
-   into `golang:1.26-trixie`. See [`docs/development.md`](docs/development.md).
+   into `golang:1.26-trixie`, defined once in
+   `deployments/containers/Containerfile.dev`. See
+   [`docs/development.md`](docs/development.md).
 2. **Latest, pinned.** Always use the newest releases (Go 1.26.5, framework
-   v1.19+, gRPC v1.82+, golangci-lint v2.12.2, latest Actions), pinned exactly.
-   Bumps go through Dependabot / a `build(deps)` commit.
+   v1.19+, gRPC v1.82+, golangci-lint v2.12.2, latest SHA-pinned Actions),
+   pinned exactly. Bumps go through Dependabot / a `build(deps)` commit.
 3. **Evidence before facts.** Any claim about CVP/EOS behaviour must be
    corroborated via the **`arista-mcp`** MCP (and, where possible, a live
    round-trip against the netlab2 lab) and cited in the resource's package
@@ -49,6 +52,17 @@ The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
 | Terragrunt integration | [`docs/standards/terragrunt-integration.md`](docs/standards/terragrunt-integration.md) |
 | Methodology (roles, gates, sprints) | [`docs/methodology.md`](docs/methodology.md) |
 
+## Map
+
+| Need | Go to |
+|---|---|
+| How to work here | this file (`AGENTS.md`) |
+| Standards (naming/versioning/commits/changelog/Go/provider/Terragrunt) | [`docs/standards/`](docs/standards/) |
+| Methodology & roles | [`docs/methodology.md`](docs/methodology.md) |
+| Dev loop | [`docs/development.md`](docs/development.md) |
+| Design & resources | [`design.md`](design.md) |
+| Contributing & gates | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+
 ## Tooling you must use
 
 | Tool | Why |
@@ -64,8 +78,9 @@ Every **CVP/EOS or library API fact** — a REST endpoint, gRPC service/RPC,
 message field, TerminAttr flag, EOS CLI, port, auth model, RBAC behavior,
 version-gated behavior — MUST be verified against an authoritative source
 **before** you state it or build a request/command around it. Training-data
-recall is a hypothesis to confirm, never an answer. This is non-negotiable
-(global rule: `~/.claude/rules/cvp-eos-sources.md`; skill: `cvp-api-lookup`).
+recall is a hypothesis to confirm, never an answer. A guessed endpoint's 4xx is
+not evidence about permissions. This is non-negotiable (global rule:
+`~/.claude/rules/cvp-eos-sources.md`; skill: `cvp-api-lookup`).
 
 Authoritative sources, in order:
 
@@ -160,6 +175,12 @@ Commit only source, configuration, docs, examples, and manifests. **Never**
 commit: credentials, tokens, certificates/keys, session cookies, Terraform
 state, real CVP exports/snapshots/support bundles, or environment identifiers.
 `.gitignore` covers the common cases; when in doubt, keep it out.
+
+## Skills note
+
+The global "use a skill before acting" convention still applies, but this
+project's own instructions — in this file and `docs/standards/` — **take
+precedence** where they are more specific.
 
 ## House context
 
