@@ -120,15 +120,12 @@ Value passing:
 - Alternative for production: reference `data.hashicorp_vault_kv_secret` in the
   `inputs_json` composition.
 
-### D7 — Retry policy
+### D7 — Shared SDK submission policy
 
-- Transient (`Unavailable`, `DeadlineExceeded`): exponential backoff, 5 attempts,
-  1–16 s base.
-- Semantic (`AlreadyExists`, `NotFound`, `FailedPrecondition`): fail immediately.
-- Auth (`Unauthenticated`, `PermissionDenied`): fail immediately + suggest an
-  auth-method check.
-
-Implementation: `google.golang.org/grpc` retry middleware.
+The shared SDK configures no application replay of mutations. A started RPC
+failure has an unknown outcome; retain the caller-created request ID and
+reconcile with CVP before resubmission. Native transparent gRPC retries are not
+a server deduplication guarantee. See [the SDK boundary](docs/en/shared-sdk.md).
 
 ### D8 — Prototype vs production gates
 

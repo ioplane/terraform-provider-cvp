@@ -16,7 +16,7 @@ This page is the map. The rationale and resource shapes live in the root
 | Provider | `internal/provider` | Provider schema, `Configure`, auth/TLS, client factory (`ClientBundle`). |
 | Resources | `internal/resources/<area>` | One package per resource family; CRUD + Import + plan/validate. |
 | CVP client | `internal/client/cvp` | Hand-written gRPC/TLS wrapper; per-service helpers; retry/backoff. |
-| Generated stubs | `internal/pb` | buf-generated gRPC message/client stubs from `api/proto` (ADR 0005). |
+| Generated stubs | Shared SDK `gen/` | Single owner from the exact `.sdk-source.json` revision; see [shared SDK](en/shared-sdk.md). |
 
 ## Transport
 

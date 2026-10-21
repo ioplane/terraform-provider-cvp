@@ -25,3 +25,4 @@ ignores:
   - .serena
   - .agents
   - .claude
+  - .cache

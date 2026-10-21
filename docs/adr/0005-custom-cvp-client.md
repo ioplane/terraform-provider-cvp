@@ -60,3 +60,10 @@ definitions using **buf**, instead of depending on `cloudvision-go`.
 - **Hand-written gRPC client** with no generation: loses compile-time type
   safety, requires hand marshalling of large messages, and silently drifts from
   the server contract.
+
+## Superseded implementation
+
+The original local generation described above is historical. The shared SDK
+candidate replaces its generated owner and RPC implementations; see
+[shared SDK development](../en/shared-sdk.md). Provider state and HCL contracts
+remain unchanged.

@@ -138,3 +138,9 @@ task testacc
   library before writing code against it.
 - **`arista-mcp` MCP** — authoritative Arista CVP/EOS behaviour; mandatory
   before asserting any CVP fact in code or docs (evidence discipline).
+
+## Candidate SDK source prerequisite
+
+Follow [shared SDK development](en/shared-sdk.md) before `task build` or
+`task all`. `task sdk-check` verifies the source pin and creates an ignored
+workspace; local protobuf generation has been retired.

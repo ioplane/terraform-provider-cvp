@@ -1,61 +1,9 @@
-<div align="center">
+# Archived CloudVision proto source
 
-# Vendored CloudVision API protobufs
+This source snapshot is retained as research provenance. The provider does not
+compile or regenerate it. Generated types and their single process owner now
+come from the exact shared SDK revision in `.sdk-source.json`.
 
-</div>
-
-This directory holds the **vendored** Protocol Buffer definitions for the subset
-of the Arista CloudVision Resource APIs that `terraform-provider-cvp` consumes.
-From them we generate our own Go stubs into [`internal/pb`](../../internal/pb)
-via `buf` — we do **not** depend on `github.com/aristanetworks/cloudvision-go`.
-See [ADR 0005](../../docs/adr/0005-custom-cvp-client.md) for the rationale.
-
-## Source
-
-Upstream: <https://github.com/aristanetworks/cloudvision-apis> (Apache-2.0).
-
-Keep only what the provider calls, plus transitive imports:
-
-```text
-api/proto/
-├── arista/
-│   ├── workspace.v1/        # WorkspaceConfigService, WorkspaceService
-│   ├── studio.v1/           # InputsConfigService, InputsService, SecretInput*
-│   └── changecontrol.v1/    # ChangeControlConfigService, ApproveConfigService, …
-├── fmp/                     # Arista field-mask / wrapper helpers (imported)
-└── google/                  # only if not resolved from buf's well-known types
-```
-
-## Updating the vendored protos
-
-1. Pull the pinned upstream revision (record the commit in the PR body).
-2. Copy only the needed service files + their imports under `api/proto/`.
-3. `task proto-lint` — buf lint.
-4. `task proto-breaking` — buf breaking-change check against the previous revision.
-5. `task proto` — regenerate `internal/pb`.
-6. `task build test` — confirm the generated client still compiles and passes.
-
-Pin the upstream revision in the commit message; treat a proto bump like any
-other dependency bump (`build(deps)` commit, CHANGELOG entry).
-
-## Current vendored closure
-
-Vendored from `cloudvision-apis` — the `arista/workspace.v1`, `arista/studio.v1`
-and `arista/changecontrol.v1` import closures (computed with
-`buf build … | buf ls-files --include-imports`); Google well-known types are
-provided by buf and not vendored:
-
-```text
-arista/workspace.v1/{workspace,services.gen}.proto
-arista/studio.v1/{studio,services.gen}.proto
-arista/changecontrol.v1/{changecontrol,services.gen}.proto
-arista/{configstatus.v1,imagestatus.v1,subscriptions,time}/*.proto
-fmp/{deletes,extensions,wrappers}.proto
-```
-
-`studio.v1` and `changecontrol.v1` add no new transitive imports beyond the
-workspace closure (`fmp/*`, `subscriptions`, `time`, Google well-known types).
-
-The pinned upstream revision is recorded in `.upstream-revision`. `buf lint`
-skips these vendored trees (see `buf.yaml`); `task proto` regenerates
-`internal/pb` deterministically.
+See [shared SDK development](../../docs/en/shared-sdk.md). `buf.gen.yaml` and
+provider-local `internal/pb` have been retired; `task sdk-check` validates the
+candidate workspace instead of generating a second owner.

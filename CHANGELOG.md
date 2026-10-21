@@ -134,6 +134,15 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 
 ### Changed
 
+- Use the exact shared SDK candidate for the existing Workspace/Studio client;
+  remove provider-local generated stubs and protobuf generation. Preserve HCL,
+  schema, state mapping, import IDs and the Studio prefix-overlap guard.
+- Retain workflow request IDs on RPC errors, report unknown submission outcomes,
+  and confirm abandon before deleting workspace config. No configured mutation
+  replay; session authentication now sends the SDK access_token cookie.
+- Require scoped private-SDK read access for candidate CI. Release remains
+  gated on an approved published immutable SDK dependency.
+
 - Pin development and CI to Go 1.27.3 and golangci-lint v2.15.0 before the shared SDK migration.
 - Mount the Go build cache at GOCACHE and wrap Taskfile commands without changing their shell behavior.
 

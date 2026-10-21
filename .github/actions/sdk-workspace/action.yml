@@ -1,0 +1,39 @@
+name: Exact SDK candidate workspace
+description: Check out the approved SDK source revision without a published module tag.
+inputs:
+  token:
+    description: Read-only credential for the private SDK repository.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check SDK access and source pin
+      id: pin
+      shell: bash
+      env:
+        SDK_READ_TOKEN: ${{ inputs.token }}
+      run: |
+        if [ -z "$SDK_READ_TOKEN" ]; then
+          echo "::error::Private SDK checkout requires scoped CVP_SDK_READ_TOKEN; see docs/en/shared-sdk.md"
+          exit 1
+        fi
+        python3 - <<'PYCODE' >> "$GITHUB_OUTPUT"
+        import json, re
+        pin = json.load(open('.sdk-source.json'))
+        assert pin['repository'] == 'ioplane/arista-cvp-re'
+        assert re.fullmatch('[0-9a-f]{40}', pin['revision'])
+        print('revision=' + pin['revision'])
+        PYCODE
+    - name: Checkout exact SDK source
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: ioplane/arista-cvp-re
+        ref: ${{ steps.pin.outputs.revision }}
+        token: ${{ inputs.token }}
+        persist-credentials: false
+        path: .cache/cvp-sdk/source
+    - name: Prepare Go workspace
+      shell: bash
+      run: |
+        python3 scripts/automation/sdk.py prepare
+        echo "GOWORK=$GITHUB_WORKSPACE/.cache/cvp-sdk/go.work" >> "$GITHUB_ENV"

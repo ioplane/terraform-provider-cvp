@@ -1,31 +1,13 @@
 package cvp
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 
-	"google.golang.org/grpc"
-
-	studiov1 "github.com/ioplane/terraform-provider-cvp/internal/pb/arista/studio.v1"
-	workspacev1 "github.com/ioplane/terraform-provider-cvp/internal/pb/arista/workspace.v1"
+	sdk "github.com/ioplane/cvp-sdk/go/cvp"
+	"github.com/ioplane/cvp-sdk/go/cvp/auth"
 )
-
-// retryServiceConfig retries only transient failures (design.md D7): UNAVAILABLE
-// and DEADLINE_EXCEEDED with exponential backoff, 5 attempts, 1–16 s. Semantic
-// and auth failures (AlreadyExists, NotFound, FailedPrecondition, Unauthenticated,
-// PermissionDenied) are not retried — they fail fast and are mapped to
-// diagnostics by the caller.
-const retryServiceConfig = `{
-  "methodConfig": [{
-    "name": [{}],
-    "retryPolicy": {
-      "maxAttempts": 5,
-      "initialBackoff": "1s",
-      "maxBackoff": "16s",
-      "backoffMultiplier": 2.0,
-      "retryableStatusCodes": ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
-    }
-  }]
-}`
 
 // Config holds everything needed to dial CVP. It is populated from the provider
 // configuration block.
@@ -59,72 +41,38 @@ func (c Config) validate() error {
 	return nil
 }
 
-// Client is a CVP Resource-API gRPC client. It owns the connection; callers must
-// Close it when done (the provider does so on shutdown).
-type Client struct {
-	conn *grpc.ClientConn
-}
+// Client adapts the shared SDK to the provider's existing internal interfaces.
+type Client struct{ sdk *sdk.Client }
 
-// New validates the config and creates a lazy gRPC client (grpc.NewClient does
-// not dial until the first RPC). Transport is TLS; bearer/session attach a
-// per-RPC Authorization header.
+// New validates provider configuration and creates the shared authenticated client.
 func New(cfg Config) (*Client, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
-
-	creds, err := buildTransportCreds(cfg)
+	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS13}
+	// Explicit practitioner opt-in; the SDK preserves TLS encryption.
+	tlsConfig.InsecureSkipVerify = cfg.InsecureTLS
+	if len(cfg.CAPEM) > 0 {
+		tlsConfig.RootCAs = x509.NewCertPool()
+		if !tlsConfig.RootCAs.AppendCertsFromPEM(cfg.CAPEM) {
+			return nil, ErrInvalidCACert
+		}
+	}
+	var identity auth.Method
+	switch AuthMethod(cfg.AuthMethod) {
+	case AuthBearer:
+		identity = auth.Bearer(cfg.Token)
+	case AuthSession:
+		identity = auth.Session(cfg.Token)
+	case AuthCert:
+		identity = auth.Cert(cfg.CertPEM, cfg.KeyPEM, nil)
+	}
+	client, err := sdk.NewClient(cfg.Endpoint, sdk.WithAuth(identity), sdk.WithTLSConfig(tlsConfig))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cvp: create SDK client: %w", err)
 	}
-
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(creds),
-		grpc.WithDefaultServiceConfig(retryServiceConfig),
-	}
-	if tok := cfg.Token; tok != "" && AuthMethod(cfg.AuthMethod) != AuthCert {
-		opts = append(opts, grpc.WithPerRPCCredentials(bearerToken{token: tok}))
-	}
-
-	conn, err := grpc.NewClient(cfg.Endpoint, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("cvp: create gRPC client for %q: %w", cfg.Endpoint, err)
-	}
-	return &Client{conn: conn}, nil
+	return &Client{sdk: client}, nil
 }
 
-// Close releases the underlying connection.
-func (c *Client) Close() error {
-	if c.conn == nil {
-		return nil
-	}
-	return c.conn.Close()
-}
-
-// Workspace returns the read client (GetOne/GetAll) for workspaces.
-func (c *Client) Workspace() workspacev1.WorkspaceServiceClient {
-	return workspacev1.NewWorkspaceServiceClient(c.conn)
-}
-
-// WorkspaceConfig returns the config (mutating) client — Set creates/updates a
-// workspace, Delete removes it.
-func (c *Client) WorkspaceConfig() workspacev1.WorkspaceConfigServiceClient {
-	return workspacev1.NewWorkspaceConfigServiceClient(c.conn)
-}
-
-// Studios returns the read client for studios (GetOne/GetAll) — used to resolve
-// and validate a studio_id.
-func (c *Client) Studios() studiov1.StudioServiceClient {
-	return studiov1.NewStudioServiceClient(c.conn)
-}
-
-// Inputs returns the read client for studio inputs (the derived state view).
-func (c *Client) Inputs() studiov1.InputsServiceClient {
-	return studiov1.NewInputsServiceClient(c.conn)
-}
-
-// InputsConfig returns the config (mutating) client for studio inputs — Set
-// writes an inputs value at a studio path in a workspace, Delete removes it.
-func (c *Client) InputsConfig() studiov1.InputsConfigServiceClient {
-	return studiov1.NewInputsConfigServiceClient(c.conn)
-}
+// Close releases the shared SDK connection.
+func (c *Client) Close() error { return c.sdk.Close() }

@@ -19,3 +19,7 @@ reports
 node_modules
 .idea
 .vscode
+.cache
+.superpowers
+**/.venv
+**/__pycache__

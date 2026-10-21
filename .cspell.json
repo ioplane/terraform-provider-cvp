@@ -12,9 +12,9 @@
     ".serena/**",
     ".agents/**",
     ".claude/**",
-    "internal/pb/**/*.go",
     "go.sum",
-    "**/*.lock.hcl"
+    "**/*.lock.hcl",
+    ".cache/**"
   ],
   "words": [
     "Arista",
@@ -173,7 +173,10 @@
     "azapi",
     "tftest",
     "GOCACHE",
-    "GOTOOLCHAIN"
+    "GOTOOLCHAIN",
+    "protoreflect",
+    "protoregistry",
+    "cvpsdk"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",

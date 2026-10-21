@@ -8,7 +8,7 @@
 /internal/provider/     @ioplane/maintainers
 /internal/resources/    @ioplane/maintainers
 /api/proto/             @ioplane/maintainers
-/internal/pb/           @ioplane/maintainers
+/.sdk-source.json       @ioplane/maintainers
 
 # Release, security, and CI plumbing.
 /.github/               @ioplane/maintainers

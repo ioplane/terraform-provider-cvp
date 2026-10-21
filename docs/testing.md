@@ -69,8 +69,8 @@ resource.Test(t, resource.TestCase{
 
 - `task test` (unit + race) runs on every push/PR in `golang:1.27-trixie`.
 - PR gate jobs (all SHA-pinned, see `.github/workflows/`): build-and-test,
-  lint-go, lint-py (ruff + ty), vulncheck, **proto** (buf lint + `internal/pb`
-  in-sync check), terraform (fmt), lint-docs, commitlint (PR title),
+  lint-go, lint-py (ruff + ty), vulncheck, **sdk-owner** (exact SDK source + single protobuf owner +
+  acceptance-tag compilation + tidy), terraform (fmt), lint-docs, commitlint (PR title),
   **dependency-review**, **SonarQube** (coverage), plus the Security
   (CodeQL/gosec/Trivy/**Semgrep**) and Scorecard workflows.
 - Acceptance tests are **out of the PR gate**; they run in a protected,
