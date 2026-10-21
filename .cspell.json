@@ -12,9 +12,9 @@
     ".serena/**",
     ".agents/**",
     ".claude/**",
-    "internal/pb/**/*.go",
     "go.sum",
-    "**/*.lock.hcl"
+    "**/*.lock.hcl",
+    ".cache/**"
   ],
   "words": [
     "Arista",
@@ -171,10 +171,23 @@
     "pgsteward",
     "cyrilgdn",
     "azapi",
-    "tftest"
+    "tftest",
+    "GOCACHE",
+    "GOTOOLCHAIN",
+    "protoreflect",
+    "protoregistry",
+    "cvpsdk"
   ],
   "ignoreRegExpList": [
     "/0x[0-9a-fA-F]+/",
     "/[0-9a-f]{7,40}/"
+  ],
+  "overrides": [
+    {
+      "filename": "docs/ru/**/*.md",
+      "ignoreRegExpList": [
+        "/[\\u0400-\\u04ff]+/g"
+      ]
+    }
   ]
 }

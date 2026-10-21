@@ -1,16 +1,30 @@
 package cvp
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
 	"math/big"
+	"net"
+	"reflect"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	workspacev1 "github.com/ioplane/cvp-sdk/go/gen/arista/workspace.v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 // selfSigned returns a matching cert/key PEM pair for TLS tests.
@@ -65,53 +79,44 @@ func TestConfig_validate(t *testing.T) {
 	}
 }
 
-func TestBearerToken(t *testing.T) {
-	t.Parallel()
-	b := bearerToken{token: "abc123"}
-	md, err := b.GetRequestMetadata(t.Context())
-	if err != nil {
-		t.Fatalf("GetRequestMetadata: %v", err)
-	}
-	if got := md["authorization"]; got != "Bearer abc123" {
-		t.Fatalf("authorization = %q, want %q", got, "Bearer abc123")
-	}
-	if !b.RequireTransportSecurity() {
-		t.Fatal("RequireTransportSecurity() = false, want true")
-	}
-}
-
-func TestBuildTransportCreds(t *testing.T) {
+func TestNew_TLS(t *testing.T) {
 	t.Parallel()
 	cert, key := selfSigned(t)
 
 	t.Run("bearer over TLS", func(t *testing.T) {
 		t.Parallel()
-		if _, err := buildTransportCreds(Config{AuthMethod: "bearer"}); err != nil {
+		client, err := New(Config{Endpoint: "cvp:443", Token: "test", AuthMethod: "bearer"})
+		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
+		t.Cleanup(func() { _ = client.Close() })
 	})
 	t.Run("valid CA", func(t *testing.T) {
 		t.Parallel()
-		if _, err := buildTransportCreds(Config{AuthMethod: "bearer", CAPEM: cert}); err != nil {
+		client, err := New(Config{Endpoint: "cvp:443", Token: "test", AuthMethod: "bearer", CAPEM: cert})
+		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
+		t.Cleanup(func() { _ = client.Close() })
 	})
 	t.Run("invalid CA", func(t *testing.T) {
 		t.Parallel()
-		_, err := buildTransportCreds(Config{AuthMethod: "bearer", CAPEM: []byte("not a pem")})
+		_, err := New(Config{Endpoint: "cvp:443", Token: "test", AuthMethod: "bearer", CAPEM: []byte("not a pem")})
 		if !errors.Is(err, ErrInvalidCACert) {
 			t.Fatalf("err = %v, want ErrInvalidCACert", err)
 		}
 	})
 	t.Run("cert mTLS", func(t *testing.T) {
 		t.Parallel()
-		if _, err := buildTransportCreds(Config{AuthMethod: "cert", CertPEM: cert, KeyPEM: key}); err != nil {
+		client, err := New(Config{Endpoint: "cvp:443", AuthMethod: "cert", CertPEM: cert, KeyPEM: key})
+		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
+		t.Cleanup(func() { _ = client.Close() })
 	})
 	t.Run("cert bad material", func(t *testing.T) {
 		t.Parallel()
-		_, err := buildTransportCreds(Config{AuthMethod: "cert", CertPEM: []byte("x"), KeyPEM: []byte("y")})
+		_, err := New(Config{Endpoint: "cvp:443", AuthMethod: "cert", CertPEM: []byte("x"), KeyPEM: []byte("y")})
 		if err == nil {
 			t.Fatal("expected error for invalid cert material")
 		}
@@ -127,7 +132,7 @@ func TestNew(t *testing.T) {
 			t.Fatalf("New: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Close() })
-		if c.WorkspaceConfig() == nil || c.Workspace() == nil {
+		if c.sdk == nil {
 			t.Fatal("service clients must be non-nil")
 		}
 	})
@@ -137,4 +142,65 @@ func TestNew(t *testing.T) {
 			t.Fatalf("err = %v, want ErrTokenRequired", err)
 		}
 	})
+}
+
+// TestProviderUsesSingleProtoOwner catches a return to provider-local wire types.
+func TestProviderUsesSingleProtoOwner(t *testing.T) {
+	t.Parallel()
+	for _, name := range []protoreflect.FullName{"arista.workspace.v1.Workspace", "arista.studio.v1.InputsConfig"} {
+		message, err := protoregistry.GlobalTypes.FindMessageByName(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := reflect.TypeOf(message.New().Interface()).Elem().PkgPath()
+		want := "github.com/ioplane/cvp-sdk/go/gen/" + map[protoreflect.FullName]string{"arista.workspace.v1.Workspace": "arista/workspace.v1", "arista.studio.v1.InputsConfig": "arista/studio.v1"}[name]
+		if got != want {
+			t.Errorf("%s owner = %s, want %s", name, got, want)
+		}
+	}
+}
+
+type unavailableWorkspace struct {
+	workspacev1.UnimplementedWorkspaceConfigServiceServer
+
+	calls     atomic.Int32
+	requestID atomic.Value
+}
+
+func (s *unavailableWorkspace) Set(_ context.Context, request *workspacev1.WorkspaceConfigSetRequest) (*workspacev1.WorkspaceConfigSetResponse, error) {
+	s.calls.Add(1)
+	s.requestID.Store(request.GetValue().GetRequestParams().GetRequestId().GetValue())
+	return nil, status.Error(codes.PermissionDenied, "request received")
+}
+
+func TestSubmitWorkspaceVerbRetainsRequestID(t *testing.T) {
+	t.Parallel()
+	cert, key := selfSigned(t)
+	pair, err := tls.X509KeyPair(cert, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listener, err := new(net.ListenConfig).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13, Certificates: []tls.Certificate{pair}})))
+	backend := &unavailableWorkspace{}
+	workspacev1.RegisterWorkspaceConfigServiceServer(server, backend)
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+	client, err := New(Config{Endpoint: listener.Addr().String(), AuthMethod: "bearer", Token: "test", InsecureTLS: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	id, err := client.SubmitWorkspaceVerb(ctx, "ws-1", VerbBuild)
+	if id == "" || err == nil || !strings.Contains(err.Error(), id) {
+		t.Fatalf("request correlation lost: id=%q error=%v", id, err)
+	}
+	if backend.calls.Load() != 1 || backend.requestID.Load() != id {
+		t.Fatalf("submission mismatch: calls=%d sent=%q returned=%q", backend.calls.Load(), backend.requestID.Load(), id)
+	}
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	workspacev1 "github.com/ioplane/terraform-provider-cvp/internal/pb/arista/workspace.v1"
+	workspacev1 "github.com/ioplane/cvp-sdk/go/gen/arista/workspace.v1"
 
 	"github.com/ioplane/terraform-provider-cvp/internal/client/cvp"
 )

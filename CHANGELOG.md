@@ -134,6 +134,18 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 
 ### Changed
 
+- Use the exact shared SDK candidate for the existing Workspace/Studio client;
+  remove provider-local generated stubs and protobuf generation. Preserve HCL,
+  schema, state mapping, import IDs and the Studio prefix-overlap guard.
+- Retain workflow request IDs on RPC errors, report unknown submission outcomes,
+  and confirm abandon before deleting workspace config. No configured mutation
+  replay; session authentication now sends the SDK access_token cookie.
+- Require scoped private-SDK read access for candidate CI. Release remains
+  gated on an approved published immutable SDK dependency.
+
+- Pin development and CI to Go 1.27.3 and golangci-lint v2.15.0 before the shared SDK migration.
+- Mount the Go build cache at GOCACHE and wrap Taskfile commands without changing their shell behavior.
+
 - **BREAKING: `cvp_change_control` will be a data source + actions, not a
   resource ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)).**
   The v0.1 schema-only `cvp_change_control` **resource** stub is superseded by a
@@ -197,6 +209,11 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
   run); the severity tiers classify findings, not the exit code (review finding).
 - Pinned `MinVersion: tls.VersionTLS13` on the `insecure_tls` credentials path
   too (Semgrep `missing-ssl-minversion`).
+
+### Security
+
+- Update gRPC to `v1.84.0`, protobuf to `v1.36.12` and `x/net` to `v0.61.0`,
+  including required Go module dependencies, to address transport advisories.
 
 ## [0.1.0] — 2026-07-16
 

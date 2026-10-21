@@ -19,7 +19,7 @@ Engineering docs for `terraform-provider-cvp`. Start with [`AGENTS.md`](../AGENT
 | [standards/versioning.md](standards/versioning.md) | SemVer 2.0.0 for a provider. |
 | [standards/commits.md](standards/commits.md) | Conventional Commits 1.0.0. |
 | [standards/changelog.md](standards/changelog.md) | Keep a Changelog 1.1.0. |
-| [standards/go-1.26-style.md](standards/go-1.26-style.md) | Go 1.26 patterns & antipatterns. |
+| [en/go-1.27-style.md](en/go-1.27-style.md) | Go 1.27 patterns & antipatterns. |
 | [standards/terraform-provider-best-practices.md](standards/terraform-provider-best-practices.md) | HashiCorp design principles + framework conventions + DoD. |
 | [standards/terragrunt-integration.md](standards/terragrunt-integration.md) | Driving the provider with Terragrunt 1.1. |
 

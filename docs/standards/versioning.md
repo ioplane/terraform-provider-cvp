@@ -59,10 +59,10 @@ This is part of the per-resource Definition of Done.
 Terraform Plugin Framework, gRPC, tooling, GitHub Actions) while pinning exact
 versions for reproducibility:
 
-- `go.mod` `go` directive: exact patch (`1.26.5`).
+- `go.mod` `go` directive: exact patch (`1.27.3`).
 - Go dependencies: exact tags; Dependabot proposes weekly bumps.
 - Container tool versions: pinned as `ARG`s in `Containerfile.dev` and mirrored
   in `compose.dev.yml`.
 - GitHub Actions: pinned by commit SHA with a `# vX.Y.Z` trailing comment.
-- Base image `golang:1.26-trixie` intentionally floats within the `1.26`
-  minor so patch releases (currently `1.26.5`) are picked up on rebuild.
+- Base image: exact patch tag plus immutable digest in `Containerfile.dev` and CI.
+  Rebuilds never silently select a newer compiler.

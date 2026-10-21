@@ -20,7 +20,7 @@ jobs:
     name: Build & test
     runs-on: ubuntu-latest
     container:
-      image: golang:1.26-trixie
+      image: docker.io/library/golang:1.27.3-trixie@sha256:1896654cfc5c2b5ad74c07f29cb36f5d2d1cbed42e3054070fbfe444e521e83c
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
@@ -29,6 +29,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: ./.github/actions/sdk-workspace
+        with:
+          token: ${{ secrets.CVP_SDK_READ_TOKEN }}
       - name: Cache Go modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -77,25 +80,31 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/sdk-workspace
+        with:
+          token: ${{ secrets.CVP_SDK_READ_TOKEN }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
           cache: true
       - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.12.2
+          version: v2.15.0
           args: --timeout=10m
 
   vulncheck:
     name: Vulnerability audit
     runs-on: ubuntu-latest
     container:
-      image: golang:1.26-trixie
+      image: docker.io/library/golang:1.27.3-trixie@sha256:1896654cfc5c2b5ad74c07f29cb36f5d2d1cbed42e3054070fbfe444e521e83c
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/sdk-workspace
+        with:
+          token: ${{ secrets.CVP_SDK_READ_TOKEN }}
       - name: Cache Go modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -106,40 +115,22 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
           govulncheck ./...
 
-  proto:
-    name: Proto (buf lint · generated in sync)
+  sdk-owner:
+    name: Shared SDK (source pin and single owner)
     runs-on: ubuntu-latest
     container:
-      image: golang:1.26-trixie
+      image: docker.io/library/golang:1.27.3-trixie@sha256:1896654cfc5c2b5ad74c07f29cb36f5d2d1cbed42e3054070fbfe444e521e83c
     steps:
-      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
-        with:
-          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/sdk-workspace
         with:
-          fetch-depth: 0
-      - name: Install buf + protoc plugins
+          token: ${{ secrets.CVP_SDK_READ_TOKEN }}
+      - name: Verify single owner and candidate metadata
         run: |
-          go install github.com/bufbuild/buf/cmd/buf@v1.72.0
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2
-      - name: buf lint + regenerate diff
-        shell: bash
-        run: |
-          export PATH="$(go env GOPATH)/bin:$PATH"
-          # Container job: the checkout is owned by a different uid, so git
-          # refuses without an explicit safe.directory.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          if [ -z "$(find api/proto -name '*.proto' 2>/dev/null | head -1)" ]; then
-            echo "no .proto files yet (P1) — skipping"; exit 0
-          fi
-          buf lint
-          buf generate
-          if ! git diff --quiet -- internal/pb; then
-            echo "::error::internal/pb is out of date — run 'task proto' and commit the result"
-            git diff --stat -- internal/pb
-            exit 1
-          fi
+          go test ./internal/client/cvp -run '^TestProviderUsesSingleProtoOwner$' -count=1
+          go test -tags acceptance ./... -run '^$'
+          python3 scripts/automation/sdk.py check-tidy
+          git diff --exit-code
 
   sonarqube:
     name: SonarQube
@@ -152,9 +143,12 @@ jobs:
         with:
           # Full history so SonarCloud computes new-code / blame accurately.
           fetch-depth: 0
+      - uses: ./.github/actions/sdk-workspace
+        with:
+          token: ${{ secrets.CVP_SDK_READ_TOKEN }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
           cache: true
       - name: Run tests with coverage
         env:
@@ -193,7 +187,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
       - name: terraform fmt -check
         run: |
           curl -fsSL "https://releases.hashicorp.com/terraform/1.15.8/terraform_1.15.8_linux_amd64.zip" -o /tmp/tf.zip

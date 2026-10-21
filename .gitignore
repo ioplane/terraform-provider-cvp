@@ -68,3 +68,6 @@ skills-lock.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Exact candidate SDK source and temporary Go workspace
+/.cache/

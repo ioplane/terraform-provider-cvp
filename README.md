@@ -9,7 +9,7 @@
 [![Last commit](https://shieldcn.dev/github/last-commit/ioplane/terraform-provider-cvp.svg?variant=secondary)](https://github.com/ioplane/terraform-provider-cvp/commits/main)
 <br>
 <!-- Stack & conventions -->
-[![Go 1.26](https://shieldcn.dev/badge/go-1.26-00ADD8.svg?variant=branded&logo=go&logoColor=white)](https://go.dev/doc/go1.26)
+[![Go 1.27](https://shieldcn.dev/badge/go-1.27-00ADD8.svg?variant=branded&logo=go&logoColor=white)](https://go.dev/doc/go1.27)
 [![Plugin Framework](https://shieldcn.dev/badge/framework-v1.19-7B42BC.svg?variant=secondary&logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform/plugin/framework)
 [![Conventional Commits](https://shieldcn.dev/badge/commits-conventional-FE5196.svg?variant=secondary&logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 [![SemVer 2.0.0](https://shieldcn.dev/badge/semver-2.0.0-3fb950.svg?variant=secondary)](https://semver.org/spec/v2.0.0.html)
@@ -41,7 +41,7 @@ flowchart LR
   subgraph P["terraform-provider-cvp · protocol 6"]
     prov["provider<br/>config · auth · TLS"]
     res["resources<br/>workspace · studio_inputs · change_control"]
-    cli["client/cvp<br/>gRPC · retry/backoff"]
+    cli["client/cvp<br/>shared SDK adapter"]
   end
   cvp[("Arista CloudVision Portal")]
 
@@ -111,7 +111,7 @@ Three, configured natively on the provider (`design.md` D4):
 No host toolchain required — everything runs in the Podman dev container.
 
 ```bash
-task up        # build + start dev container (golang:1.26-trixie)
+task up        # build + start the digest-pinned Go 1.27.3 dev container
 task shell     # shell inside it
 task build     # build the provider binary
 task test      # unit tests (+race)
@@ -130,10 +130,10 @@ terraform-provider-cvp/
 ├── internal/
 │   ├── provider/                  # provider Metadata/Schema/Configure + auth
 │   ├── resources/{workspace,studio_inputs,change_control}/
-│   ├── client/cvp/                # hand-written gRPC client wrapper (P1)
-│   └── pb/                        # buf-generated CVP stubs (ADR 0005, P1)
+│   └── client/cvp/                # shared SDK adapter; state contract retained
 ├── api/proto/                     # vendored cloudvision-apis protos (ADR 0005)
-├── buf.yaml · buf.gen.yaml        # proto lint + codegen config
+├── .sdk-source.json               # exact shared SDK source candidate
+├── buf.yaml                       # archived proto lint configuration
 ├── examples/                      # HCL + Terragrunt examples (registry docs source)
 ├── deployments/
 │   ├── containers/                # Containerfile.dev + containers/registries.conf
@@ -183,3 +183,11 @@ directly. See [`CONTRIBUTING.md`](CONTRIBUTING.md) and `scripts/worktree.sh`.
 ## License
 
 [Apache-2.0](LICENSE) (see [ADR 0002](docs/adr/0002-license-apache-2.0.md)).
+
+## Shared SDK candidate
+
+The existing working Workspace and Studio surface uses the exact SDK source
+revision in `.sdk-source.json`; Change Control remains a schema-only stub.
+Before building, prepare the source checkout described in
+[shared SDK development](docs/en/shared-sdk.md). Hosted CI needs separate
+read access to the private SDK repository. No release is claimed by this candidate.

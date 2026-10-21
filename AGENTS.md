@@ -14,18 +14,18 @@ code, and follow it exactly.
 You are building a **Terraform provider for Arista CloudVision Portal (CVP)** on
 the `terraform-plugin-framework` (protocol 6), talking to CVP Resource APIs over
 gRPC/TLS. Scope, non-goals, and resource shapes are in [`design.md`](design.md).
-The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
+The provider is currently a v0.1 skeleton (schema authored, Change Control CRUD remains stubbed with
 `TODO(P1)`); the job is to grow it to production under the standards below.
 
 ## Golden rules
 
 1. **Use the dev container.** No host toolchain. `task up && task shell`.
    Everything (Go, Terraform, golangci-lint, tfplugindocs, goreleaser) is baked
-   into `golang:1.26-trixie`, defined once in
+   into `golang:1.27-trixie`, defined once in
    `deployments/containers/Containerfile.dev`. See
    [`docs/development.md`](docs/development.md).
-2. **Latest, pinned.** Always use the newest releases (Go 1.26.5, framework
-   v1.19+, gRPC v1.82+, golangci-lint v2.12.2, latest SHA-pinned Actions),
+2. **Latest, pinned.** Always use the newest releases (Go 1.27.3, framework
+   v1.19+, gRPC v1.82+, golangci-lint v2.15.0, latest SHA-pinned Actions),
    pinned exactly. Bumps go through Dependabot / a `build(deps)` commit.
 3. **Evidence before facts.** Any claim about CVP/EOS behaviour must be
    corroborated via the **`arista-mcp`** MCP (and, where possible, a live
@@ -47,7 +47,7 @@ The provider is currently a v0.1 skeleton (schema authored, CRUD stubbed with
 | Versioning (SemVer 2.0.0) | [`docs/standards/versioning.md`](docs/standards/versioning.md) |
 | Commits (Conventional Commits 1.0.0) | [`docs/standards/commits.md`](docs/standards/commits.md) |
 | Changelog (Keep a Changelog 1.1.0) | [`docs/standards/changelog.md`](docs/standards/changelog.md) |
-| Go 1.26 style | [`docs/standards/go-1.26-style.md`](docs/standards/go-1.26-style.md) |
+| Go 1.27 style | [`docs/en/go-1.27-style.md`](docs/en/go-1.27-style.md) |
 | Provider design + Definition of Done | [`docs/standards/terraform-provider-best-practices.md`](docs/standards/terraform-provider-best-practices.md) |
 | Terragrunt integration | [`docs/standards/terragrunt-integration.md`](docs/standards/terragrunt-integration.md) |
 | Methodology (roles, gates, sprints) | [`docs/methodology.md`](docs/methodology.md) |
@@ -142,8 +142,8 @@ local merges to `main`.
    vulncheck). Resource-touching changes: also `task verify` (live acceptance),
    and quote the `N/N acceptance tests pass` line in the commit body.
 4. Update `CHANGELOG.md` `[Unreleased]`.
-5. Regenerate registry docs (`task docs`) if the schema changed; regenerate
-   stubs (`task proto`) if protos changed.
+5. Regenerate registry docs (`task docs`) if the schema changed; update the exact SDK source pin if wire types changed; never regenerate
+   provider-local stubs.
 6. Commit per Conventional Commits; push the branch; **open a Pull Request**
    whose title is a Conventional Commit subject (CI validates it). One
    code-owner approval + green required checks, then **squash-merge**.

@@ -245,10 +245,6 @@ linters:
     presets:
       - std-error-handling
       - common-false-positives
-    paths:
-      # Generated gRPC stubs (buf, ADR 0005). `generated: strict` already skips
-      # files with a DO NOT EDIT header; this is belt-and-suspenders.
-      - internal/pb
     rules:
       # Plugin Framework Schema/Metadata/ModifyPlan method bodies are long and
       # deeply nested by design — attribute maps, not business logic.

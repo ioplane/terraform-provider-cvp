@@ -16,7 +16,7 @@ breaking change post-1.0).
 |---|---|
 | Plugin protocol | **6.0** (`terraform-registry-manifest.json`) |
 | Framework | `terraform-plugin-framework` **v1.19.0** |
-| Go (build) | **1.26** |
+| Go (build) | **1.27** |
 | Lab validated against | the netlab2 CloudVision Portal lab |
 
 The provider is a single protocol-6 server; every capability below travels that

@@ -14,8 +14,12 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     container:
-      image: golang:1.26-trixie
+      image: docker.io/library/golang:1.27.3-trixie@sha256:1896654cfc5c2b5ad74c07f29cb36f5d2d1cbed42e3054070fbfe444e521e83c
     steps:
+      - name: Require published SDK dependency
+        run: |
+          echo "Shared SDK candidate is unpublished; complete the SDK release gate first." >&2
+          exit 1
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
@@ -41,7 +45,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version-file: go.mod
 
       - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
 

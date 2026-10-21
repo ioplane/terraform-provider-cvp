@@ -27,3 +27,4 @@ ignore: |
   reports/
   .worktrees/
   .serena/
+  .cache/
