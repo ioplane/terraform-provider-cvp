@@ -16,7 +16,7 @@ canonical guide for both human and agent contributors.
 | Commits | [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) — see [`docs/standards/commits.md`](docs/standards/commits.md) |
 | Changelog | [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) — see [`docs/standards/changelog.md`](docs/standards/changelog.md) |
 | Naming | [`docs/standards/naming-conventions.md`](docs/standards/naming-conventions.md) |
-| Go style | [`docs/standards/go-1.26-style.md`](docs/standards/go-1.26-style.md) |
+| Go style | [`docs/en/go-1.27-style.md`](docs/en/go-1.27-style.md) |
 | Provider design | [`docs/standards/terraform-provider-best-practices.md`](docs/standards/terraform-provider-best-practices.md) |
 | Methodology | [`docs/methodology.md`](docs/methodology.md) |
 

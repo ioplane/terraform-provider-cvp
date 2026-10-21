@@ -134,6 +134,9 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 
 ### Changed
 
+- Pin development and CI to Go 1.27.3 and golangci-lint v2.15.0 before the shared SDK migration.
+- Mount the Go build cache at GOCACHE and wrap Taskfile commands without changing their shell behavior.
+
 - **BREAKING: `cvp_change_control` will be a data source + actions, not a
   resource ([ADR 0007](docs/adr/0007-change-control-datasource-and-actions.md)).**
   The v0.1 schema-only `cvp_change_control` **resource** stub is superseded by a

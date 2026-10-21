@@ -14,8 +14,7 @@ services:
       context: ../..
       dockerfile: deployments/containers/Containerfile.dev
       args:
-        GO_VERSION: "1.26"
-        GOLANGCI_LINT_VERSION: "v2.12.2"
+        GOLANGCI_LINT_VERSION: "v2.15.0"
         GOVULNCHECK_VERSION: "v1.6.0"
         OSV_SCANNER_VERSION: "v2.4.0"
         TFPLUGINDOCS_VERSION: "v0.25.0"
@@ -45,6 +44,7 @@ services:
 
     environment:
       GOFLAGS: "-buildvcs=false"
+      GOTOOLCHAIN: local
       GOCACHE: /tmp/go-cache
       GOMODCACHE: /go/pkg/mod
       CHECKPOINT_DISABLE: "1"

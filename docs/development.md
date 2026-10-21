@@ -40,9 +40,9 @@ token** stored in gopass at `infra4/sonarcloud/management-token` (not the CI
 `SONAR_TOKEN`). The quality gate reads `NONE` until the `main` branch is analyzed
 once (baseline); that happens on the first merge that runs CI on `main`.
 
-The container (`golang:1.26-trixie`, see
+The container (`golang:1.27-trixie`, see
 [`deployments/containers/Containerfile.dev`](../deployments/containers/Containerfile.dev))
-bakes in: Go 1.26.5, golangci-lint v2.12.2, govulncheck, osv-scanner, gotestsum,
+bakes in: Go 1.27.3, golangci-lint v2.15.0, govulncheck, osv-scanner, gotestsum,
 Terraform 1.15.8, OpenTofu 1.12.5, Terragrunt 1.1.1, tfplugindocs v0.25.0,
 goreleaser v2.17.1, buf, the Node/Python doc linters, and the Astral toolchain
 (uv 0.11.33 + ruff 0.16.0 + ty 0.0.64) for the podman-py automation.

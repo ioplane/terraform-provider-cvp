@@ -9,7 +9,7 @@
 [![Last commit](https://shieldcn.dev/github/last-commit/ioplane/terraform-provider-cvp.svg?variant=secondary)](https://github.com/ioplane/terraform-provider-cvp/commits/main)
 <br>
 <!-- Stack & conventions -->
-[![Go 1.26](https://shieldcn.dev/badge/go-1.26-00ADD8.svg?variant=branded&logo=go&logoColor=white)](https://go.dev/doc/go1.26)
+[![Go 1.27](https://shieldcn.dev/badge/go-1.27-00ADD8.svg?variant=branded&logo=go&logoColor=white)](https://go.dev/doc/go1.27)
 [![Plugin Framework](https://shieldcn.dev/badge/framework-v1.19-7B42BC.svg?variant=secondary&logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform/plugin/framework)
 [![Conventional Commits](https://shieldcn.dev/badge/commits-conventional-FE5196.svg?variant=secondary&logo=conventionalcommits&logoColor=white)](https://www.conventionalcommits.org/en/v1.0.0/)
 [![SemVer 2.0.0](https://shieldcn.dev/badge/semver-2.0.0-3fb950.svg?variant=secondary)](https://semver.org/spec/v2.0.0.html)
@@ -111,7 +111,7 @@ Three, configured natively on the provider (`design.md` D4):
 No host toolchain required — everything runs in the Podman dev container.
 
 ```bash
-task up        # build + start dev container (golang:1.26-trixie)
+task up        # build + start dev container (golang:1.27-trixie)
 task shell     # shell inside it
 task build     # build the provider binary
 task test      # unit tests (+race)
