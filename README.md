@@ -41,7 +41,7 @@ flowchart LR
   subgraph P["terraform-provider-cvp · protocol 6"]
     prov["provider<br/>config · auth · TLS"]
     res["resources<br/>workspace · studio_inputs · change_control"]
-    cli["client/cvp<br/>gRPC · retry/backoff"]
+    cli["client/cvp<br/>shared SDK adapter"]
   end
   cvp[("Arista CloudVision Portal")]
 
@@ -130,8 +130,7 @@ terraform-provider-cvp/
 ├── internal/
 │   ├── provider/                  # provider Metadata/Schema/Configure + auth
 │   ├── resources/{workspace,studio_inputs,change_control}/
-│   ├── client/cvp/                # hand-written gRPC client wrapper (P1)
-│   └── pb/                        # buf-generated CVP stubs (ADR 0005, P1)
+│   └── client/cvp/                # shared SDK adapter; state contract retained
 ├── api/proto/                     # vendored cloudvision-apis protos (ADR 0005)
 ├── .sdk-source.json               # exact shared SDK source candidate
 ├── buf.yaml                       # archived proto lint configuration
