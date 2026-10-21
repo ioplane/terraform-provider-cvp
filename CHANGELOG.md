@@ -198,6 +198,11 @@ and are called out under a `Changed` heading with a `BREAKING:` prefix.
 - Pinned `MinVersion: tls.VersionTLS13` on the `insecure_tls` credentials path
   too (Semgrep `missing-ssl-minversion`).
 
+### Security
+
+- Update gRPC to `v1.84.0`, protobuf to `v1.36.12` and `x/net` to `v0.61.0`,
+  including required Go module dependencies, to address transport advisories.
+
 ## [0.1.0] — 2026-07-16
 
 ### Added
